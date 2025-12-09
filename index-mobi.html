@@ -1,0 +1,1653 @@
+<!DOCTYPE html>   
+<html lang="it">   
+<head>   
+    <meta charset="UTF-8">   
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+    <title>Resonance: War of Faction</title>   
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>   
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>   
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>   
+    <script src="https://cdn.tailwindcss.com"></script>   
+    <style>   
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500;700&display=swap');   
+   
+        body {   
+            background-color: #0f172a;   
+            font-family: 'Roboto', sans-serif;   
+            color: #e0e0e0;   
+            overflow: hidden;   
+            user-select: none;   
+        }   
+   
+        .font-fantasy { font-family: 'Cinzel', serif; }   
+   
+        /* Card Styles */   
+        .card {   
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);   
+            transform-style: preserve-3d;   
+            cursor: pointer;   
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);   
+            border: 2px solid transparent; /* Added for rarity border */   
+        }   
+        .card:hover {   
+            transform: translateY(-40px) scale(1.1) rotate(1deg);   
+            z-index: 100;   
+            box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.8);   
+        }   
+   
+        .pile-stack {   
+            box-shadow:    
+                2px 2px 0 #334155,   
+                4px 4px 0 #334155,   
+                6px 6px 0 #334155;   
+        }   
+   
+        .board-area {   
+            transition: background 0.5s ease-in-out;   
+        }   
+        .play-zone {   
+            background-color: rgba(0,0,0,0.2);   
+            border-radius: 10px;   
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.4);   
+            border: 1px solid rgba(255, 255, 255, 0.05);   
+            margin: 0.5rem;   
+        }   
+   
+        .human-bg { background: radial-gradient(circle, #1e3a8a 0%, #0f172a 75%); }   
+        .undead-bg { background: radial-gradient(circle, #3b0764 0%, #0f172a 75%); }   
+        .beast-bg { background: radial-gradient(circle, #14532d 0%, #0f172a 75%); }   
+   
+        .rarity-common { border-color: #a1a1aa; box-shadow: 0 0 2px #a1a1aa; }   
+        .rarity-uncommon { border-color: #22c55e; box-shadow: 0 0 4px #22c55e; }   
+        .rarity-epic { border-color: #a855f7; box-shadow: 0 0 8px #a855f7; }   
+        .rarity-unique { border-color: #eab308; box-shadow: 0 0 12px #eab308; animation: pulse-gold 2s infinite; }   
+   
+        @keyframes pulse-gold {   
+            0% { box-shadow: 0 0 12px #eab308; }   
+            50% { box-shadow: 0 0 20px #facc15; }   
+            100% { box-shadow: 0 0 12px #eab308; }   
+        }   
+   
+        .selected-to-play {   
+            box-shadow: 0 0 0 4px #3b82f6;   
+            transform: translateY(-40px) scale(1.1);   
+            z-index: 40;   
+        }   
+        .selected-to-discard {   
+            box-shadow: 0 0 0 4px #ef4444;   
+            opacity: 0.5;   
+            transform: scale(0.9);   
+            filter: grayscale(0.8);   
+        }   
+        .valid-target {   
+            box-shadow: 0 0 0 4px #ef4444;   
+            animation: pulse-red 1s infinite;   
+            cursor: crosshair;   
+        }   
+        @keyframes pulse-red {   
+            0% { border-color: #ef4444; }   
+            50% { border-color: #b91c1c; }   
+            100% { border-color: #ef4444; }   
+        }   
+           
+        @keyframes slideIn {   
+            from { transform: translateY(20px); opacity: 0; }   
+            to { transform: translateY(0); opacity: 1; }   
+        }   
+   
+        /* Tooltip styling */   
+        .tooltip {   
+            visibility: hidden;   
+            opacity: 0;   
+            transition: opacity 0.2s;   
+            pointer-events: none;   
+        }   
+        .card:hover .tooltip {   
+            visibility: visible;   
+            opacity: 1;   
+        }   
+           
+        .scrollbar-hide::-webkit-scrollbar { display: none; }   
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }   
+    </style>   
+</head>   
+<body>   
+    <div id="root"></div>   
+    <script type="text/babel">   
+        // --- DATA DEFINITIONS ---   
+   
+        const CARD_TYPES = { CREATURE: 'Creatura', SPELL: 'Magia', EVENT: 'Evento', HERO: 'Eroe' };   
+        const HUMAN_DECK_LIST = [  
+            // UNICHE (2)  
+            { name: "Re Aldren, Giudizio della Corona", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'DESTROY_WEAK', val: 3, desc: "Quando entra, distruggi una creatura avversaria con Forza ≤3." },  
+            { name: "Lady Evelyne, Luce della Rinascita", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 2, desc: "Quando entra, una tua creatura ottiene +2 Forza permanente." },  
+            // EPICHE (8)  
+            { name: "Cavaliere del Sole d’Acciaio", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza permanente." },  
+            { name: "Mastro Stratega Leonhart", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SCRY', val: 1, desc: "Guarda la prima carta del mazzo; puoi metterla in fondo." },  
+            { name: "Arciera Reale d’Élite", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura avversaria con Forza 1." },  
+            { name: "Comandante delle Legioni", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 1, desc: "Una tua creatura ottiene +1 Forza permanente." },  
+            { name: "Sentinella dell’Ordine Sacro", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'REDUCE_NEXT_CREATURE_COST', val: 1, desc: "La prossima creatura che giochi questo turno costa 1 Forza in meno." },  
+            { name: "Giudizio dell’Alba", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'DESTROY_WEAK', val: 2, desc: "Distruggi una creatura avversaria con Forza ≤2." },  
+            { name: "Martello della Giustizia", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'TEMP_DEBUFF_ENEMY', val: 2, desc: "Una creatura avversaria perde 2 Forza per questo turno." },  
+            { name: "Decreto Imperiale", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'BOUNCE_ENEMY', val: 1, desc: "Rimanda una creatura avversaria nella mano del proprietario." },  
+            // INSOLITE (12)  
+            { name: "Guerriero della Prima Linea", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Cavaliere della Guardia Bianca", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'TEMP_BUFF_TARGET_ALLY', val: 1, desc: "Una tua creatura ottiene +1 Forza per questo turno." },  
+            { name: "Scudiero dell’Avanguardia", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'SCRY_1_NO_CHOICE', val: 1, desc: "Guarda la prima carta del mazzo." },  
+            { name: "Sacerdote Militare", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 1, desc: "Una tua creatura ottiene +1 Forza permanente." },  
+            { name: "Arciere di Fortezza", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'DAMAGE', val: 1, desc: "Infliggi 1 danno a una creatura (se ha F1, distruggila)." },  
+            { name: "Cavaliere Grifone", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'TEMP_DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza per questo turno." },  
+            { name: "Paladino del Vero Sigillo", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'HEXPROOF_THIS_TURN', val: 0, desc: "Non può essere bersagliato da incantesimi avversari questo turno." },  
+            { name: "Colpo di Disciplina", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'TEMP_DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza per questo turno." },  
+            { name: "Sigillo del Comando", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 1, desc: "Una tua creatura ottiene +1 Forza permanente." },  
+            { name: "Raddoppio di Formazione", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 1, desc: "Una tua creatura ottiene +1 Forza permanente." },  
+            { name: "Deferenza al Re", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'INCREASE_OPPONENT_COST', val: 1, desc: "La prossima carta avversaria giocata questo turno costa +1." },  
+            { name: "Fendente di Giustizia", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura con Forza 1." },  
+            // COMUNI (20)  
+            { name: "Soldato della Muraglia", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Picchiere della Milizia", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza per il turno." },  
+            { name: "Recluta del Battaglione", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'LOOT', val: 1, desc: "Pesca 1 carta, poi scarta 1 carta." },  
+            { name: "Guardia del Forte", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Guerriero dell’Argento", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_BUFF_TARGET_ALLY', val: 1, desc: "Una tua creatura ottiene +1 Forza per il turno." },  
+            { name: "Spadaccino Addestrato", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Messo Reale", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SCRY_2_SPECIAL', val: 2, desc: "Guarda le prime 2 del mazzo; una sopra, una sotto." },  
+            { name: "Cavallo di Pattuglia", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_BUFF_TARGET_ALLY', val: 1, desc: "Una tua creatura ottiene +1 Forza per il turno." },  
+            { name: "Ufficiale del Campo", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 1, desc: "Una tua creatura ottiene +1 Forza permanente." },  
+            { name: "Acciaio Benedetto", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'TEMP_BUFF_TARGET_ALLY', val: 1, desc: "+1 Forza per il turno a una tua creatura." },  
+            { name: "Colpo Rapido", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura F1." },  
+            { name: "Linea Difensiva", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'PROTECT_ALLIES_FROM_DEBUFF', val: 0, desc: "Le tue creature non possono perdere Forza per questo turno." },  
+            { name: "Benedizione del Sovrano", strength: 3, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 3, desc: "Una tua creatura ottiene +3 Forza permanente." },  
+            { name: "Lealtà Ferrea", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'HEXPROOF_THIS_TURN', val: 0, desc: "Una tua creatura non può essere bersagliata questo turno." },  
+            { name: "Marcia dell’Ordine", strength: 2, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'TEMP_BUFF_TARGET_ALLY', val: 2, desc: "Una tua creatura ottiene +2 Forza per questo turno." },  
+            { name: "Purificazione Militare", strength: 2, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'CLEANSE', val: 0, desc: "Rimuovi tutti i malus Forza da una tua creatura." },  
+            { name: "Armigero di Casato", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Guardia Celere", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+        ];  
+          
+        const UNDEAD_DECK_LIST = [  
+            // UNICHE (2)  
+            { name: "Re Lich Mor’Vhal", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'REVIVE_WEAK_FIELD', val: 2, desc: "Quando entra in campo, rianima una creatura dal tuo cimitero con Forza ≤2 direttamente in campo." },  
+            { name: "Regina Ossidia, Rianimatrice Reale", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'STEAL_STRENGTH', val: 2, desc: "Quando entra in campo, ruba 2 di forza da una carta nemica e le aggiunge a se stessa." },  
+            // EPICHE (8)  
+            { name: "Necromante dell’Abisso", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'REVIVE_WEAK_HAND', val: 2, desc: "Pesca 1 carta dal tuo cimitero (creatura qualsiasi ≤F2)." },  
+            { name: "Campione Scheletrico", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 1, desc: "Una tua creatura ottiene +1 Forza permanente." },  
+            { name: "Mietitore dell’Oscurità", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza permanente." },  
+            { name: "Evocatore Putrescente", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'DEATHRATTLE_REVIVE', val: 1, desc: "Quando muore, rianima una creatura F1 dal tuo cimitero in campo." },  
+            { name: "Rituale dell’Addensamento", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'REVIVE_WEAK_FIELD', val: 1, desc: "Rianima una creatura F1 dal tuo cimitero in campo." },  
+            { name: "Tocco della Morte", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'DESTROY_WOUNDED', val: 0, desc: "Distruggi una creatura ferita (cioè che ha perso Forza)." },  
+            { name: "Morsa del Sepolcro", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'DEBUFF_ENEMY', val: 2, desc: "Una creatura avversaria perde 2 Forza permanente." },  
+            { name: "Chiamata Notturna", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'TEMP_BUFF_TARGET_ALLY', val: 2, desc: "Una tua creatura ottiene +2 Forza fino alla fine del turno." },  
+            // INSOLITE (14)  
+            { name: "Scheletro Guardiano", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'TEMP_DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza per questo turno." },  
+            { name: "Zombie Affamato", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'GROW_ON_SPELL_KILL', val: 1, desc: "Quando distruggi una creatura con un incantesimo, questa ottiene +1 permanente." },  
+            { name: "Ombra Errante", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'DEATHRATTLE_RETURN', val: 0, desc: "Quando muore, torna in mano." },  
+            { name: "Lama dei Caduti", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'LOOT', val: 1, desc: "Pesca 1 carta, poi scarta 1 carta." },  
+            { name: "Necrofago Spezzamembra", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza permanente." },  
+            { name: "Spirito del Baratro", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'TEMP_BUFF_TARGET_ALLY', val: 1, desc: "Una tua creatura ottiene +1 Forza per questo turno." },  
+            { name: "Abominio Rianimato", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'CONDITIONAL_DEBUFF_SELF', val: 1, desc: "Entra con −1 Forza se non hai creature nel cimitero." },  
+            { name: "Miasma Necrotico", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'TEMP_DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza per questo turno." },  
+            { name: "Ossario Vivente", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'REVIVE_WEAK_FIELD', val: 2, desc: "Rianima una creatura F2 dal tuo cimitero in campo." },  
+            { name: "Vincolo d’Ossa", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'PROTECT_ALLY_FROM_DESTRUCTION', val: 1, desc: "Una tua creatura non può essere distrutta questo turno." },  
+            { name: "Risveglio Tenebroso", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'REVIVE_FROM_GRAVE_CHOICE', val: 2, desc: "Guarda le prime 2 carte del tuo cimitero, metti una in mano." },  
+            { name: "Sentenza Putrefatta", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura F1." },  
+            { name: "Marea Oscura", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 1, desc: "Una tua creatura ottiene +1 Forza permanente." },  
+            { name: "Danza dei Morti", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'CLEANSE', val: 0, desc: "Rimuovi tutti i malus di Forza da una tua creatura." },  
+            // COMUNI (16)  
+            { name: "Scheletro Animato", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Servitore Putrido", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TRANSFER_STRENGTH', val: 1, desc: "Perdi 1 Forza su una tua creatura, questa ottiene +1." },  
+            { name: "Zombie Traballante", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_LOOT', val: 1, desc: "Quando muore, peschi 1 e scarti 1." },  
+            { name: "Scheletro Spezzato", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza per questo turno." },  
+            { name: "Famelico del Sepolcro", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DISCARD_THEN_DRAW', val: 1, desc: "Scarta 1 carta, poi pesca 1 carta." },  
+            { name: "Soldato Decaduto", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Ghoul Minore", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'REVIVE_WEAK_HAND', val: 1, desc: "Pesca una creatura F1 dal cimitero." },  
+            { name: "Spettro del Dolore", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza permanente." },  
+            { name: "Carogna Ambulante", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Morsa di Morte", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura F1." },  
+            { name: "Respiro Funereo", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'TEMP_BUFF_TARGET_ALLY', val: 1, desc: "Una tua creatura ottiene +1 fino a fine turno." },  
+            { name: "Artiglio dell’Oscurità", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza permanente." },  
+            { name: "Chiodi dell’Abisso", strength: 2, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'SACRIFICE_DRAW', val: 1, desc: "Distruggi una tua creatura; pesca 1 carta." },  
+            { name: "Onda Necrotica", strength: 2, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'AOE_TEMP_DEBUFF', val: 1, desc: "Tutte le creature avversarie perdono 1 Forza per questo turno." },  
+            { name: "Marchio dei Defunti", strength: 2, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 2, desc: "Una tua creatura ottiene +2 Forza permanente." },  
+            { name: "Richiamo del Cimitero", strength: 3, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'REVIVE_WEAK_HAND', val: 2, desc: "Rianima una creatura F2 dal tuo cimitero in mano." }  
+        ];  
+  
+        const BEAST_DECK_LIST = [  
+            // UNICHE (2)  
+            { name: "Alfa della Foresta Primordiale", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'FACTION_WIDE_BUFF_AURA', val: 1, desc: "Le tue Bestie entrano con +1 Forza." },  
+            { name: "Spirito del Branco Antico", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'START_OF_TURN_DRAW_IF_BEAST', val: 1, desc: "All’inizio del tuo turno, guarda la prima carta. Se è una Bestia, pescala." },  
+            // EPICHE (8)  
+            { name: "Colosso delle Zanne", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'TEMP_BUFF', val: 2, desc: "Entra con +2 Forza per il turno." },  
+            { name: "Lupo Alfa delle Nevi", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'DESTROY_WEAK', val: 2, desc: "Distruggi una creatura avversaria con Forza ≤2." },  
+            { name: "Grande Cinghiale Tonante", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'TEMP_BUFF', val: 2, desc: "Entra con +2 Forza per il turno." },  
+            { name: "Felino della Giungla Profonda", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'PACK_BONUS', val: 1, desc: "Se controlli un’altra Bestia, entra con +1 Forza." },  
+            { name: "Gufo Guardiano", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SCRY', val: 1, desc: "Guarda la prima carta del mazzo; puoi metterla in fondo." },  
+            { name: "Basilisco delle Radici Antiche", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'AURA_DEBUFF_ENEMY', val: 1, desc: "Una creatura avversaria perde 1 Forza permanente, finché Basilisco resta in campo." },  
+            // INSOLITE (12)  
+            { name: "Lupo delle Braci", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'TEMP_BUFF', val: 1, desc: "+1 Forza per il turno." },  
+            { name: "Serpe delle Dune", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'SACRIFICE_DRAW', val: 1, desc: "Puoi sacrificare una Bestia: pesca 1." },  
+            { name: "Orso Montano", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'PACK_BONUS_2', val: 1, desc: "Entra con +1 Forza se controlli altre 2 Bestie." },  
+            { name: "Predatore della Savana", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura F1." },  
+            { name: "Volpe Scattante", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'TEMP_BUFF', val: 2, desc: "+2 Forza per il turno." },  
+            { name: "Avvoltoio delle Ossa", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'GROW_ON_ALLY_DEATH', val: 1, desc: "Quando una Bestia muore, questa ottiene +1 Forza permanente." },  
+            { name: "Iena Urlante", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'DEGENERATE', val: 1, desc: "All’inizio del tuo prossimo turno, perde 1 Forza." },  
+            { name: "Capra Rocciosa", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'PROTECT_FROM_WEAK_DESTRUCTION', val: 1, desc: "Non può essere distrutta da effetti che colpiscono solo creature F1." },  
+            { name: "Lince dei Cieli", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'SCRY_1_NO_CHOICE', val: 1, desc: "Guarda la prima carta del mazzo." },  
+            { name: "Scorpide del Canyon", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi creatura avversaria F1." },  
+            { name: "Rana Colossale", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'SACRIFICE_ALLY_BUFF', val: 2, desc: "Sacrifica una tua Bestia: questa ottiene +2 permanente." },  
+            { name: "Serpente Oceano", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'DEATHRATTLE_AOE_DEBUFF', val: 1, desc: "Alla morte, un avversario perde 1 Forza per il turno." },  
+            // COMUNI (20)  
+            { name: "Cervo della Radura", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'PACK_BONUS', val: 1, desc: "Entra con +1 se controlli una Bestia." },  
+            { name: "Lupo Comune", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Scoiattolo Agile", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_BUFF', val: 1, desc: "+1 Forza per il turno." },  
+            { name: "Biscia Velenosa", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_DEBUFF_ENEMY', val: 1, desc: "-1 Forza a una creatura per il turno." },  
+            { name: "Cinghialetto Furioso", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SACRIFICE_SELF_DELAYED', val: 0, desc: "Sacrifica all’inizio del tuo prossimo turno." },  
+            { name: "Tartaruga delle Paludi", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'PROTECT_FROM_DAMAGE', val: 1, desc: "Riduci il prossimo “danno” (soglia) subito da una tua creatura di 1." },  
+            { name: "Ghepardo Veloce", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_BUFF', val: 1, desc: "+1 Forza per il turno." },  
+            { name: "Serpente del Fiume", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Uccello del Bosco", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SCRY_1_NO_CHOICE', val: 1, desc: "Guarda la prima del mazzo." },  
+            { name: "Leone Giovane", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'GROW_ON_ALLY_DEATH_THIS_TURN', val: 1, desc: "Se una Bestia è morta questo turno, ottiene +1 permanente." },  
+            { name: "Lupo Pallido", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'CONDITIONAL_BUFF_ENEMY_COUNT', val: 1, desc: "Entra con +1 se l’avversario controlla 3 creature." },  
+            { name: "Ghiro delle Rupi", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Pantera Notturna", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SACRIFICE_ALLY_TEMP_BUFF', val: 1, desc: "Sacrifica una Bestia: +1 per il turno." },  
+            { name: "Cinghiale Nero", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Serpente Roccioso", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SACRIFICE_SELF_DELAYED', val: 0, desc: "Sacrifica all’inizio del tuo prossimo turno." },  
+            { name: "Corvo dello Scrutare", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SCRY', val: 1, desc: "Scry 1." },  
+            { name: "Formica Guerriera", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'PACK_BONUS_3', val: 1, desc: "Entra con +1 se controlli 3 Bestie." },  
+            { name: "Lupo Azzurro", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "-" },  
+            { name: "Lucertola Solare", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'TEMP_BUFF', val: 1, desc: "+1 Forza per il turno." },  
+            { name: "Alce delle Praterie", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'CONDITIONAL_BUFF_ENEMY_STRENGTH', val: 1, desc: "+1 permanente se l’avversario ha una creatura F4+." }  
+        ];  
+   
+        const FACTIONS = { HUMAN: 'human', UNDEAD: 'undead', BEAST: 'beast' };   
+           
+        // Game Constants - UPDATED SCORING   
+        const WIN_SCORE = 6;   
+        const THRESHOLDS = [   
+            { val: 5, pts: 1, label: "+1" },   
+            { val: 10, pts: 1, label: "+1" },   
+            { val: 15, pts: 1, label: "+1" },   
+            { val: 20, pts: 3, label: "+3" }, // Big jump   
+            { val: 30, pts: 5, label: "+5" }  // Instant Win usually   
+        ];   
+   
+        const EFFECTS = {   
+            NONE: 'NONE',   
+            BUFF_SELF_FACTION: 'BUFF_SELF_FACTION',   
+            DESTROY_WEAK: 'DESTROY_WEAK',   
+            DESTROY_EXACT: 'DESTROY_EXACT',   
+            DRAW_CARD: 'DRAW_CARD',   
+            INSPIRE: 'INSPIRE',   
+            DEBUFF_ENEMY: 'DEBUFF_ENEMY',   
+            REVIVE_WEAK_HAND: 'REVIVE_WEAK_HAND',   
+            REVIVE_WEAK_FIELD: 'REVIVE_WEAK_FIELD',   
+            DISCARD_OPPONENT: 'DISCARD_OPPONENT',   
+            BOUNCE_ENEMY: 'BOUNCE_ENEMY',   
+            LOOT: 'LOOT',    
+            SCRY: 'SCRY',    
+            CLEANSE: 'CLEANSE',   
+            AOE_DEBUFF: 'AOE_DEBUFF',   
+            SACRIFICE_DRAW: 'SACRIFICE_DRAW',    
+            DEATHRATTLE_RETURN: 'DEATHRATTLE_RETURN',    
+            HEXPROOF: 'HEXPROOF',   
+            GROW_ON_KILL: 'GROW_ON_KILL',   
+               
+            // BEAST EFFECTS   
+            PACK_BONUS: 'PACK_BONUS',   
+            FACTION_WIDE_BUFF_AURA: 'FACTION_WIDE_BUFF_AURA',   
+            START_OF_TURN_DRAW: 'START_OF_TURN_DRAW',   
+            AURA_DEBUFF_ENEMY: 'AURA_DEBUFF_ENEMY',   
+            PACK_BONUS_2: 'PACK_BONUS_2',   
+            DEGENERATE: 'DEGENERATE',   
+            DEATHRATTLE_AOE_DEBUFF: 'DEATHRATTLE_AOE_DEBUFF',   
+            GROW_ON_ALLY_DEATH_THIS_TURN: 'GROW_ON_ALLY_DEATH_THIS_TURN',   
+            CONDITIONAL_BUFF_ENEMY_COUNT: 'CONDITIONAL_BUFF_ENEMY_COUNT',   
+            SACRIFICE_ALLY_TEMP_BUFF: 'SACRIFICE_ALLY_TEMP_BUFF',   
+            PACK_BONUS_3: 'PACK_BONUS_3',   
+            CONDITIONAL_BUFF_ENEMY_STRENGTH: 'CONDITIONAL_BUFF_ENEMY_STRENGTH',   
+            PROTECT_FROM_DAMAGE: 'PROTECT_FROM_DAMAGE',   
+            SACRIFICE_SELF_DELAYED: 'SACRIFICE_SELF_DELAYED',   
+            TEMP_BUFF: 'TEMP_BUFF',   
+            SACRIFICE_ALLY_BUFF: 'SACRIFICE_ALLY_BUFF',   
+            GROW_ON_ALLY_DEATH: 'GROW_ON_ALLY_DEATH',   
+            CONDITIONAL_BUFF_ENEMY_FIELD: 'CONDITIONAL_BUFF_ENEMY_FIELD',   
+            PROTECT_FROM_WEAK_DESTRUCTION: 'PROTECT_FROM_WEAK_DESTRUCTION',   
+            DEATHRATTLE_DEBUFF: 'DEATHRATTLE_DEBUFF',   
+            AUTO_DRAW_SACRIFICE: 'AUTO_DRAW_SACRIFICE',   
+   
+            // HUMAN & UNDEAD   
+            BUFF_TARGET_ALLY_PERMANENT: 'BUFF_TARGET_ALLY_PERMANENT',   
+            REDUCE_NEXT_CREATURE_COST: 'REDUCE_NEXT_CREATURE_COST',   
+            TEMP_DEBUFF_ENEMY: 'TEMP_DEBUFF_ENEMY',   
+            TEMP_BUFF_TARGET_ALLY: 'TEMP_BUFF_TARGET_ALLY',   
+            SCRY_1_NO_CHOICE: 'SCRY_1_NO_CHOICE',   
+            DAMAGE: 'DAMAGE',   
+            HEXPROOF_THIS_TURN: 'HEXPROOF_THIS_TURN',   
+            INCREASE_OPPONENT_COST: 'INCREASE_OPPONENT_COST',   
+            PROTECT_ALLY_FROM_DESTRUCTION: 'PROTECT_ALLY_FROM_DESTRUCTION',   
+            SCRY_2_SPECIAL: 'SCRY_2_SPECIAL',   
+            PROTECT_ALLIES_FROM_DEBUFF: 'PROTECT_ALLIES_FROM_DEBUFF',   
+            DEATHRATTLE_REVIVE: 'DEATHRATTLE_REVIVE',   
+            DESTROY_WOUNDED: 'DESTROY_WOUNDED',   
+            CONDITIONAL_DEBUFF_SELF: 'CONDITIONAL_DEBUFF_SELF',   
+            REVIVE_FROM_GRAVE_CHOICE: 'REVIVE_FROM_GRAVE_CHOICE',   
+            TRANSFER_STRENGTH: 'TRANSFER_STRENGTH',   
+            DEATHRATTLE_LOOT: 'DEATHRATTLE_LOOT',   
+            DISCARD_THEN_DRAW: 'DISCARD_THEN_DRAW',   
+            AOE_TEMP_DEBUFF: 'AOE_TEMP_DEBUFF',  
+            STEAL_STRENGTH: 'STEAL_STRENGTH',  
+            GROW_ON_SPELL_KILL: 'GROW_ON_SPELL_KILL',  
+            START_OF_TURN_DRAW_IF_BEAST: 'START_OF_TURN_DRAW_IF_BEAST'  
+        };   
+   
+        const TOOLTIPS = {   
+            [EFFECTS.INSPIRE]: "Ispira: Effetto bonus all'ingresso.",   
+            [EFFECTS.BUFF_SELF_FACTION]: "Potenziamento: Aumenta la forza degli alleati.",   
+            [EFFECTS.DESTROY_WEAK]: "Distruzione: Elimina nemico debole.",   
+            [EFFECTS.DEBUFF_ENEMY]: "Indebolimento: Riduce forza nemica.",   
+            [EFFECTS.PACK_BONUS]: "Branco: Ottiene bonus se controlli altre Bestie.",   
+            [EFFECTS.SACRIFICE_SELF_DELAYED]: "Instabile: Muore all'inizio del tuo prossimo turno.",   
+            [EFFECTS.TEMP_BUFF]: "Furia: Bonus forza solo per questo turno.",   
+            [EFFECTS.GROW_ON_ALLY_DEATH]: "Sciacallo: Ottiene forza quando muore un alleato.",   
+            [EFFECTS.SACRIFICE_ALLY_BUFF]: "Vorace: Sacrifica un alleato per potenziarsi.",   
+            [EFFECTS.HEXPROOF]: "Protetto: Non può essere bersagliato da magie nemiche.",   
+            [EFFECTS.PROTECT_FROM_WEAK_DESTRUCTION]: "Corazza: Immune a effetti di distruzione deboli."   
+        };   
+   
+        // --- UTILS ---   
+        let globalIdCounter = 0;   
+        const generateId = () => `uid-${Date.now()}-${globalIdCounter++}-${Math.floor(Math.random() * 1000)}`;   
+   
+        const createFullDeck = (baseList, faction) => {   
+            // Genera mazzo 1:1, una carta per ogni entry nella lista   
+            let deck = baseList.map(card => ({   
+                ...card,    
+                faction,    
+                uid: generateId(),    
+                currentStrength: card.strength,   
+                tempStrength: 0 // Aggiunto per i buff/debuff temporanei   
+            }));   
+               
+            // Shuffle   
+            for (let i = deck.length - 1; i > 0; i--) {   
+                const j = Math.floor(Math.random() * (i + 1));   
+                [deck[i], deck[j]] = [deck[j], deck[i]];   
+            }   
+            return deck;   
+        };   
+   
+        const getEffectiveStrength = (card) => {   
+            return Math.max(0, (card.currentStrength || 0) + (card.tempStrength || 0));   
+        }   
+   
+        const calculateTotalStrength = (field, enemyField) => {   
+            let total = 0;   
+            const singleTargetAura = enemyField.find(c => c.effect === EFFECTS.AURA_DEBUFF_ENEMY && c.targetUid);   
+   
+            for (const card of field) {   
+                let strength = getEffectiveStrength(card);   
+                if (singleTargetAura && card.uid === singleTargetAura.targetUid) {   
+                    strength = Math.max(0, strength - singleTargetAura.val);   
+                }   
+                total += strength;   
+            }   
+            return total;   
+        };   
+   
+        // --- COMPONENTS ---   
+   
+        const StartScreen = ({ onStart }) => (   
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white relative overflow-hidden">   
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-30"></div>   
+                <h1 className="text-5xl md:text-7xl font-fantasy text-yellow-500 mb-4 drop-shadow-xl animate-pulse z-10">RESONANCE</h1>   
+                <h2 className="text-xl text-gray-400 mb-12 z-10">WAR OF FACTION</h2>   
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl px-8 z-10">   
+                    <div onClick={() => onStart(FACTIONS.HUMAN)} className="group bg-blue-900/40 border border-blue-500/50 p-6 rounded-xl cursor-pointer hover:bg-blue-800/60 transition flex flex-col items-center shadow-2xl hover:scale-105">   
+                        <div className="text-6xl mb-4">🛡️</div>   
+                        <h3 className="text-xl font-bold text-blue-200">UMANI</h3>   
+                        <p className="text-xs text-center text-gray-400 mt-2">Controllo, Buff, Epurazione.</p>   
+                    </div>   
+                    <div onClick={() => onStart(FACTIONS.UNDEAD)} className="group bg-purple-900/40 border border-purple-500/50 p-6 rounded-xl cursor-pointer hover:bg-purple-800/60 transition flex flex-col items-center shadow-2xl hover:scale-105">   
+                        <div className="text-6xl mb-4">💀</div>   
+                        <h3 className="text-xl font-bold text-purple-200">NON MORTI</h3>   
+                        <p className="text-xs text-center text-gray-400 mt-2">Debuff, Rianimazione, Sacrificio.</p>   
+                    </div>   
+                    <div onClick={() => onStart(FACTIONS.BEAST)} className="group bg-green-900/40 border border-green-500/50 p-6 rounded-xl cursor-pointer hover:bg-green-800/60 transition flex flex-col items-center shadow-2xl hover:scale-105">   
+                        <div className="text-6xl mb-4">🐾</div>   
+                        <h3 className="text-xl font-bold text-green-200">BESTIE</h3>   
+                        <p className="text-xs text-center text-gray-400 mt-2">Branco, Furia, Istinto.</p>   
+                    </div>   
+                </div>   
+            </div>   
+        );   
+   
+        const Pile = ({ type, count, topCard, onClick }) => {   
+            const isDeck = type === 'DECK';   
+            const isClickable = onClick && count > 0;   
+            return (   
+                <div    
+                    onClick={onClick}    
+                    className={`relative w-20 h-28 rounded bg-slate-800 border-2 ${isDeck ? 'border-slate-600' : 'border-dashed border-gray-600'} flex items-center justify-center transition-transform hover:scale-105 ${isDeck ? 'pile-stack' : ''} ${isClickable ? 'cursor-pointer' : ''}`}   
+                >   
+                    {isDeck && <div className="text-3xl">🎴</div>}   
+                    {!isDeck && count > 0 && topCard && (   
+                        <div className="opacity-60 scale-90 pointer-events-none flex flex-col items-center p-1 text-[8px] text-center">   
+                            <span className="font-bold text-white text-lg">{topCard.strength}</span>   
+                            <span className="text-gray-300">{topCard.name.substring(0, 10)}...</span>   
+                        </div>   
+                    )}   
+                    {!isDeck && count === 0 && <div className="text-2xl opacity-20">⚰️</div>}   
+                    <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full border border-white shadow-md z-10">   
+                        {count}   
+                    </div>   
+                </div>   
+            );   
+        };   
+   
+        const GraveyardModal = ({ cards, onClose }) => {   
+            if (!cards) return null;   
+   
+            return (   
+                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-[600] p-8" onClick={onClose}>   
+                    <h2 className="text-3xl font-fantasy text-gray-400 mb-6">Cimitero ({cards.length})</h2>   
+                    <div className="w-full h-[70vh] bg-slate-900/50 rounded-lg p-4 overflow-y-auto flex flex-wrap gap-4 justify-center border border-gray-600">   
+                        {cards.length === 0 ? (   
+                            <p className="text-gray-500">Il cimitero è vuoto.</p>   
+                        ) : (   
+                            cards.map(card => <Card key={card.uid} card={card} onClick={() => {}} />)   
+                        )}   
+                    </div>   
+                    <button onClick={onClose} className="mt-6 px-6 py-2 rounded bg-red-700 hover:bg-red-600 text-white font-bold text-lg">CHIUDI</button>   
+                </div>   
+            );   
+        };   
+   
+        const Card = ({ card, isSelected, onClick, isValidTarget, isPaymentSelected }) => {   
+            const rarityLabel = card.rarity || 'common';   
+            const rarityClass = `rarity-${rarityLabel}`;   
+   
+            let borderClass = '';   
+            if (isSelected) borderClass = 'selected-to-play';   
+            if (isPaymentSelected) borderClass = 'selected-to-discard';   
+            if (isValidTarget) borderClass = 'valid-target';   
+   
+            const baseStr = card.strength;   
+            const currStr = getEffectiveStrength(card); // Modificato   
+            let strColor = 'text-white';   
+            if (currStr > baseStr) strColor = 'text-green-400';   
+            if (currStr < baseStr) strColor = 'text-red-400';   
+   
+            const tooltipText = TOOLTIPS[card.effect] || card.desc;   
+   
+            const factionGradient = {   
+                [FACTIONS.HUMAN]: 'from-blue-800 to-slate-900',   
+                [FACTIONS.UNDEAD]: 'from-purple-800 to-slate-900',   
+                [FACTIONS.BEAST]: 'from-green-800 to-slate-900',   
+            }[card.faction] || 'from-gray-800 to-slate-900';   
+   
+            const finalClassName = `card ${rarityClass} ${borderClass} bg-gradient-to-b ${factionGradient} relative rounded-lg w-36 h-52 flex-shrink-0 select-none group shadow-xl mx-1 overflow-hidden p-2 flex flex-col justify-between text-white`;   
+   
+            return (   
+                <div onClick={() => onClick(card)} className={finalClassName}>   
+                    {/* Top Section: Strength and Name/Type */}   
+                    <div className="flex items-start justify-between">   
+                        <div className={`font-bold font-fantasy text-3xl ${strColor} bg-slate-800/50 rounded-full w-12 h-12 flex items-center justify-center border-2 border-white/20 shadow-lg`}>   
+                            {currStr}   
+                        </div>   
+                        <div className="text-right flex-1 pl-2">   
+                            <h3 className="font-fantasy font-bold text-md leading-tight" style={{ textShadow: '1px 1px 2px #000' }}>{card.name}</h3>   
+                            <p className="text-xs text-gray-300 opacity-80">   
+                                {card.type === CARD_TYPES.SPELL ? 'Magia ⚡' :   
+                                 card.type === CARD_TYPES.EVENT ? 'Evento 📜' :   
+                                 card.type === CARD_TYPES.HERO ? 'Eroe 👑' : 'Creatura ⚔️'}   
+                            </p>   
+                        </div>   
+                    </div>   
+   
+                    {/* Description Section */}   
+                    <div className="flex-grow flex flex-col justify-center items-center text-center px-1">   
+                        <div    
+                            className="text-xs text-gray-200 leading-tight bg-black/40 rounded-lg p-2 border border-white/10 shadow-inner w-full min-h-[6em] flex items-center justify-center"   
+                            dangerouslySetInnerHTML={{ __html: card.desc }}    
+                        />   
+                    </div>   
+   
+                    {/* Tooltip */}   
+                    <div className="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-black/90 text-white text-xs p-2 rounded border border-gray-500 z-[200] pointer-events-none text-center shadow-xl">   
+                        <strong className="block text-yellow-400 mb-1">{card.name}</strong>   
+                        {tooltipText}   
+                    </div>   
+                </div>   
+            );   
+        };   
+   
+        const VictoryThresholds = ({ claimedThresholds }) => (   
+            <div className="flex items-center gap-1 text-[10px] md:text-xs bg-black/40 p-1.5 rounded border border-white/10">   
+                {THRESHOLDS.map(t => {   
+                    let statusClass = "text-gray-500 opacity-60";   
+                    let icon = "○";   
+                    if (claimedThresholds[t.val] === 'p1') {   
+                        statusClass = "text-blue-400 font-bold scale-110";   
+                        icon = "🛡️";   
+                    } else if (claimedThresholds[t.val] === 'p2') {   
+                        statusClass = "text-red-400 font-bold scale-110";   
+                        icon = "💀";   
+                    }   
+                       
+                    // Highlight Major Thresholds   
+                    let borderClass = "";   
+                    if (t.val === 20) borderClass = "border-b-2 border-orange-500 pb-0.5";   
+                    if (t.val === 30) borderClass = "border-b-2 border-yellow-400 pb-0.5";   
+   
+                    return (   
+                        <div key={t.val} className={`flex flex-col items-center mx-1 transition-all duration-300 ${statusClass} ${borderClass}`}>   
+                            <span className="text-[9px] text-gray-300 mb-0.5">{t.label}</span>   
+                            <span className="text-base">{icon}</span>   
+                            <span className="text-[8px] mt-0.5">{t.val}</span>   
+                        </div>   
+                    );   
+                })}   
+            </div>   
+        );   
+   
+        const ChoiceModal = ({ choiceState, onChoice }) => {   
+            if (!choiceState) return null;   
+   
+            const { title, options, actions } = choiceState;   
+   
+            return (   
+                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-[500]">   
+                    <h2 className="text-2xl font-fantasy text-yellow-400 mb-4">{title || "Scegli un'opzione"}</h2>   
+                    <div className="flex gap-4 mb-4">   
+                        {options.map(opt => (   
+                            <div key={opt.uid} onClick={() => onChoice(opt)}>   
+                                <Card card={opt} onClick={() => onChoice(opt)} />   
+                            </div>   
+                        ))}   
+                    </div>   
+                    {actions && actions.length > 0 && (   
+                        <div className="flex gap-4">   
+                            {actions.map(action => (   
+                                <button   
+                                    key={action.label}   
+                                    onClick={action.callback}   
+                                    className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold"   
+                                >   
+                                    {action.label}   
+                                </button>   
+                            ))}   
+                        </div>   
+                    )}   
+                </div>   
+            );   
+        };   
+   
+        // --- MAIN APP ---   
+        const App = () => {   
+            const [gameState, setGameState] = React.useState('MENU');    
+            const [playerFaction, setPlayerFaction] = React.useState(null);   
+            const [enemyFaction, setEnemyFaction] = React.useState(null);   
+            const [isProcessing, setIsProcessing] = React.useState(false);    
+            const [turnCount, setTurnCount] = React.useState(1);   
+               
+            const [p1Deck, setP1Deck] = React.useState([]);   
+            const [p1Hand, setP1Hand] = React.useState([]);   
+            const [p1Field, setP1Field] = React.useState([]);   
+            const [p1Grave, setP1Grave] = React.useState([]);   
+            const [p1VP, setP1VP] = React.useState(0);   
+   
+            const [p2Deck, setP2Deck] = React.useState([]);   
+            const [p2Hand, setP2Hand] = React.useState([]);   
+            const [p2Field, setP2Field] = React.useState([]);   
+            const [p2Grave, setP2Grave] = React.useState([]);   
+            const [p2VP, setP2VP] = React.useState(0);   
+   
+            // NEW: Claimed Thresholds { 5: 'p1', 10: null, ... }   
+            const [claimedThresholds, setClaimedThresholds] = React.useState({   
+                5: null, 10: null, 15: null, 20: null, 30: null   
+            });   
+   
+            const [selectedCard, setSelectedCard] = React.useState(null);   
+            const [paymentCards, setPaymentCards] = React.useState([]);   
+            const [isTargeting, setIsTargeting] = React.useState(false);   
+            const [pendingEffect, setPendingEffect] = React.useState(null);   
+            const [isDiscarding, setIsDiscarding] = React.useState(false);   
+            const [pendingDiscardEffect, setPendingDiscardEffect] = React.useState(null);   
+            const [logs, setLogs] = React.useState([]);   
+            const [choiceState, setChoiceState] = React.useState(null); // { effect, options, callback }   
+            const [costModifier, setCostModifier] = React.useState({ p1: 0, p2: 0 });   
+            const [protection, setProtection] = React.useState({ p1_ally: null, p1_all: false, p2_ally: null, p2_all: false });   
+            const [graveyardViewer, setGraveyardViewer] = React.useState(null); // Array of cards   
+   
+            // Refs for AI to access current state   
+            const p2HandRef = React.useRef([]);   
+            const p1FieldRef = React.useRef([]);   
+            const p1GraveRef = React.useRef([]);   
+            const p2GraveRef = React.useRef([]);   
+            const p2FieldRef = React.useRef([]);   
+            const isEndingTurnRef = React.useRef(false);   
+   
+            React.useEffect(() => { p2HandRef.current = p2Hand; }, [p2Hand]);   
+            React.useEffect(() => { p1FieldRef.current = p1Field; }, [p1Field]);   
+            React.useEffect(() => { p1GraveRef.current = p1Grave; }, [p1Grave]);   
+            React.useEffect(() => { p2GraveRef.current = p2Grave; }, [p2Grave]);   
+            React.useEffect(() => { p2FieldRef.current = p2Field; }, [p2Field]);   
+   
+            const getBaseDeck = (faction) => {   
+                if (faction === FACTIONS.HUMAN) return HUMAN_DECK_LIST;   
+                if (faction === FACTIONS.UNDEAD) return UNDEAD_DECK_LIST;   
+                return BEAST_DECK_LIST;   
+            };   
+   
+            const startGame = (chosenFaction) => {   
+                setPlayerFaction(chosenFaction);   
+                   
+                // Random enemy faction different from player   
+                const available = Object.values(FACTIONS).filter(f => f !== chosenFaction);   
+                const randomEnemy = available[Math.floor(Math.random() * available.length)];   
+                setEnemyFaction(randomEnemy);   
+   
+                let d1 = createFullDeck(getBaseDeck(chosenFaction), chosenFaction);   
+                const d2 = createFullDeck(getBaseDeck(randomEnemy), randomEnemy);   
+                   
+                let h1 = d1.splice(0, 5);   
+                if (window.p1HandOverride) {   
+                    h1 = window.p1HandOverride;   
+                    const handIds = new Set(h1.map(c => c.uid));   
+                    d1 = d1.filter(c => !handIds.has(c.uid));   
+                }   
+                let h2 = d2.splice(0, 5);   
+                if (window.p2HandOverride) {   
+                    h2 = window.p2HandOverride;   
+                    const handIds = new Set(h2.map(c => c.uid));   
+                    d2 = d2.filter(c => !handIds.has(c.uid));   
+                }   
+   
+                setP1Deck(d1); setP1Hand(h1);   
+                setP2Deck(d2); setP2Hand(h2);   
+                   
+                setP1Field([]); setP1Grave([]); setP1VP(0);   
+                if (window.p2FieldOverride) {   
+                    setP2Field(window.p2FieldOverride);   
+                    window.p2FieldOverride = null; // Clear override after use   
+                } else {   
+                    setP2Field([]);   
+                }   
+                setP2Grave([]); setP2VP(0);   
+                setClaimedThresholds({ 5: null, 10: null, 15: null, 20: null, 30: null });   
+                setLogs([]);   
+                setTurnCount(1);   
+                   
+                addLog(`⚔️ Guerra: ${chosenFaction.toUpperCase()} vs ${randomEnemy.toUpperCase()}. Inizia il tuo turno.`);   
+                setGameState('PLAYER_TURN');   
+            };   
+   
+            const addLog = (msg) => {   
+                setLogs(prev => [`> ${msg}`, ...prev].slice(0, 50));   
+            };   
+   
+            const p1Score = React.useMemo(() => calculateTotalStrength(p1Field, p2Field), [p1Field, p2Field]);   
+            const p2Score = React.useMemo(() => calculateTotalStrength(p2Field, p1Field), [p2Field, p1Field]);   
+   
+            React.useEffect(() => {   
+                if (!isEndingTurnRef.current) {   
+                    checkScoring();   
+                }   
+            }, [p1Score, p2Score]);
+   
+            const checkScoring = () => {   
+                setClaimedThresholds(prev => {   
+                    const next = { ...prev };   
+                    let p1Gained = 0;   
+                    let p2Gained = 0;   
+                    let changed = false;   
+   
+                    THRESHOLDS.forEach(t => {   
+                        // Only check if unclaimed   
+                        if (next[t.val] === null) {   
+                            // Check Player 1   
+                            if (p1Score >= t.val) {   
+                                next[t.val] = 'p1';   
+                                p1Gained += t.pts;   
+                                changed = true;   
+                                addLog(`G1 conquista soglia ${t.val}! (+${t.pts} pt)`);   
+                            }   
+                            // Check Player 2 (only if P1 didn't just claim it, or simultaneous logic?)   
+                            // "Solo il PRIMO che raggiunge la soglia". Assuming turn based check is fast enough.   
+                            // If P2 reaches it in their turn, P1 hasn't reached it yet (or already claimed it).   
+                            else if (p2Score >= t.val) {   
+                                next[t.val] = 'p2';   
+                                p2Gained += t.pts;   
+                                changed = true;   
+                                addLog(`G2 conquista soglia ${t.val}! (+${t.pts} pt)`);   
+                            }   
+                        }   
+                    });   
+   
+                    if (changed) {   
+                        if (p1Gained > 0) setP1VP(v => v + p1Gained);   
+                        if (p2Gained > 0) setP2VP(v => v + p2Gained);   
+                    }   
+                    return next;   
+                });   
+            };   
+   
+            // Check Win Condition (Immediate 6 pts)   
+            React.useEffect(() => {   
+                if (gameState === 'GAME_OVER') return;   
+                if (p1VP >= WIN_SCORE) {   
+                    alert("Vittoria! Hai raggiunto 6 Punti!");   
+                    setGameState('GAME_OVER');   
+                } else if (p2VP >= WIN_SCORE) {   
+                    alert("Sconfitta! Il nemico ha raggiunto 6 Punti!");   
+                    setGameState('GAME_OVER');   
+                }   
+            }, [p1VP, p2VP]);   
+   
+            const checkDeckOutWin = () => {   
+                let winner = null;   
+                if (p1VP > p2VP) winner = 'p1';   
+                else if (p2VP > p1VP) winner = 'p2';   
+                else {   
+                    // Tie-breaker 1: Residual Strength   
+                    if (p1Score > p2Score) winner = 'p1';   
+                    else if (p2Score > p1Score) winner = 'p2';   
+                    else {   
+                        // Tie-breaker 2: More cards on field   
+                        if (p1Field.length > p2Field.length) winner = 'p1';   
+                        else if (p2Field.length > p1Field.length) winner = 'p2';   
+                        else {   
+                            // Tie-breaker 3: Fewer cards in grave   
+                            if (p1Grave.length < p1Grave.length) winner = 'p1';   
+                            else winner = 'p2'; // Default to p2 on absolute tie   
+                        }   
+                    }   
+                }   
+                   
+                alert(`Mazzo Esaurito! Vince ${winner === 'p1' ? 'GIOCATORE 1' : 'NEMICO'} (Punti: ${p1VP}-${p2VP}, Forza: ${p1Score}-${p2Score})`);   
+                setGameState('GAME_OVER');   
+            };   
+   
+            const drawCards = (pid, amt) => {   
+                const deckSetter = pid === 1 ? setP1Deck : setP2Deck;   
+                const handSetter = pid === 1 ? setP1Hand : setP2Hand;   
+                // Since state setting is async, checking length inside setter is safer   
+                let deckOut = false;   
+   
+                deckSetter(currentDeck => {   
+                    if (currentDeck.length === 0) {   
+                        deckOut = true;   
+                        return currentDeck;   
+                    }   
+                    const drawAmount = Math.min(amt, currentDeck.length);   
+                    const drawn = currentDeck.slice(0, drawAmount);   
+                    const remaining = currentDeck.slice(drawAmount);   
+                    handSetter(currentHand => [...currentHand, ...drawn]);   
+                       
+                    if (remaining.length === 0) deckOut = true; // Deck depleted now   
+                    return remaining;   
+                });   
+   
+                if (deckOut) checkDeckOutWin();   
+            };   
+   
+            const handleStartTurnEffects = (pid) => {   
+                const fieldSetter = pid === 1 ? setP1Field : setP2Field;   
+                const graveSetter = pid === 1 ? setP1Grave : setP2Grave;   
+                const myFaction = pid === 1 ? playerFaction : enemyFaction;   
+                   
+                // 1. Process Bestie Hero effect   
+                if (myFaction === FACTIONS.BEAST) {   
+                    const hero = (pid === 1 ? p1FieldRef.current : p2FieldRef.current).find(c => c.type === CARD_TYPES.HERO && c.effect === EFFECTS.AUTO_DRAW_SACRIFICE);   
+                    if (hero) {   
+                        addLog(`${hero.name} si attiva: Pesca 1, poi sacrifica.`);   
+                        drawCards(pid, 1);   
+                        const currentField = pid === 1 ? p1FieldRef.current : p2FieldRef.current;   
+                        const targets = currentField.filter(c => c.faction === FACTIONS.BEAST && c.uid !== hero.uid);   
+                        if (targets.length > 0) {   
+                            const targetToSacrifice = targets.sort((a,b) => a.currentStrength - b.currentStrength)[0];   
+                            fieldSetter(prev => prev.filter(c => c.uid !== targetToSacrifice.uid));   
+                            graveSetter(prev => [targetToSacrifice, ...prev]);   
+                            addLog(`Sacrificata ${targetToSacrifice.name}.`);   
+                        }   
+                    }   
+                }   
+                   
+                // 2. Process delayed sacrifice & other start-of-turn effects   
+                fieldSetter(prevField => {   
+                    const nextField = [];   
+                    const dying = [];   
+                    prevField.forEach(card => {   
+                        let cardToKeep = {...card};   
+                        let shouldDie = false;   
+   
+                        if (card.effect === EFFECTS.SACRIFICE_SELF_DELAYED) {   
+                            addLog(`${card.name} muore (Instabile).`);   
+                            shouldDie = true;   
+                        }   
+                        if (card.effect === EFFECTS.DEGENERATE) {   
+                            addLog(`${card.name} degenera.`);   
+                            cardToKeep.currentStrength = Math.max(0, cardToKeep.currentStrength - card.val);   
+                        }   
+   
+                        if (shouldDie) {   
+                            dying.push(cardToKeep);   
+                        } else {   
+                            nextField.push(cardToKeep);   
+                        }   
+                    });   
+                    if (dying.length > 0) graveSetter(prev => [...prev, ...dying]);   
+                    return nextField;   
+                });   
+                   
+                // 3. Process start-of-turn draws   
+                 const drawHero = (pid === 1 ? p1FieldRef.current : p2FieldRef.current).find(c => c.type === CARD_TYPES.CREATURE && c.effect === EFFECTS.START_OF_TURN_DRAW);   
+                 if (drawHero) {   
+                    addLog(`${drawHero.name} ti fa pescare una carta extra.`);   
+                    drawCards(pid, 1);   
+                 }   
+            };   
+   
+            const startTurn = (pid) => {   
+                if (gameState === 'GAME_OVER') return;   
+                handleStartTurnEffects(pid);   
+                drawCards(pid, 2);   
+                if (pid === 1) {   
+                    setGameState('PLAYER_TURN');   
+                    setIsProcessing(false);   
+                    addLog(`Turno ${turnCount + 1}: Tocca a te.`);   
+                    setTurnCount(c => c + 1);   
+                } else {   
+                    setGameState('AI_TURN');   
+                    addLog("Turno Nemico...");   
+                    setIsProcessing(true);   
+                }   
+            };   
+   
+            const endTurn = (finishedPid) => {   
+                if (isProcessing && finishedPid === 1) return;   
+                setIsProcessing(true);   
+   
+                checkScoring();   
+   
+                isEndingTurnRef.current = true;   
+   
+                // Reset temp strength only for the player who is ending their turn.   
+                if (finishedPid === 1) {   
+                    setP1Field(prev => prev.map(c => ({ ...c, tempStrength: 0 })));   
+                } else {   
+                    setP2Field(prev => prev.map(c => ({ ...c, tempStrength: 0 })));   
+                }   
+   
+                setSelectedCard(null);   
+                setPaymentCards([]);   
+                setIsTargeting(false);   
+                setPendingEffect(null);   
+                setCostModifier({ p1: 0, p2: 0 });   
+                setProtection({ p1_ally: null, p1_all: false, p2_ally: null, p2_all: false });   
+   
+                setTimeout(() => {   
+                    isEndingTurnRef.current = false;   
+                    startTurn(finishedPid === 1 ? 2 : 1);   
+                }, 100); // A small delay to allow state to update before the next turn begins   
+            };   
+   
+            React.useEffect(() => {   
+                if (gameState === 'AI_TURN') {   
+                    const timer = setTimeout(executeAITurn, 1500);   
+                    return () => clearTimeout(timer);   
+                }   
+            }, [gameState]);   
+   
+            const executeAITurn = () => {   
+                const currentHand = p2HandRef.current;   
+                const sorted = [...currentHand].sort((a,b) => b.strength - a.strength);   
+                let play = null;   
+   
+                for (let c of sorted) {   
+                    const others = currentHand.filter(x => x.uid !== c.uid);   
+                    const totalPay = others.reduce((a,v) => a+v.strength, 0);   
+                    if (totalPay >= c.strength) {   
+                        const paySorted = others.sort((a,b) => a.strength - b.strength);   
+                        let paying = [];   
+                        let sum = 0;   
+                        for (let p of paySorted) {   
+                            if (sum < c.strength) { paying.push(p); sum += p.strength; }   
+                        }   
+                        play = { card: c, payment: paying };   
+                        break;   
+                    }   
+                }   
+   
+                if (!play) {   
+                    addLog("Il nemico passa il turno.");   
+                    setIsProcessing(false);    
+                    setTimeout(() => endTurn(2), 1000);    
+                    return;   
+                }   
+   
+                addLog(`Nemico gioca ${play.card.name}`);   
+                   
+                const idsToRemove = [play.card.uid, ...play.payment.map(x=>x.uid)];   
+                setP2Hand(prev => prev.filter(x => !idsToRemove.includes(x.uid)));   
+                setP2Grave(prev => [...prev, ...play.payment]);   
+   
+                const played = { ...play.card, tempStrength: 0 }; // Ensure it has tempStrength   
+                setP2Field(prev => [...prev, played]);   
+   
+                setTimeout(() => {   
+                    const p1f = p1FieldRef.current;    
+                    const p2f = p2FieldRef.current;   
+                    let target = null;   
+                       
+                    if (needsTarget(played)) {   
+                        if (played.effect === EFFECTS.DEBUFF_ENEMY || played.effect === EFFECTS.STEAL_STRENGTH) {   
+                            target = [...p1f].sort((a,b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];   
+                        } else if (played.effect === EFFECTS.SACRIFICE_ALLY_BUFF) {   
+                            target = p2f.filter(c => c.faction === FACTIONS.BEAST && c.uid !== played.uid).sort((a,b) => getEffectiveStrength(a) - getEffectiveStrength(b))[0];   
+                        } else {   
+                            const candidates = p1f.filter(x => getEffectiveStrength(x) <= played.val);   
+                            target = candidates.sort((a,b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];   
+                        }   
+                    }   
+                    resolveEffect(played, target, 2);   
+                    setIsProcessing(false);   
+                    setTimeout(() => endTurn(2), 1500);   
+                }, 800);   
+            };   
+   
+            const handleHandClick = (card) => {   
+                if (gameState !== 'PLAYER_TURN' || isProcessing) return;   
+   
+                if (isDiscarding) {   
+                    const passedState = {  
+                        myField: p1FieldRef.current,  
+                        enemyField: p2FieldRef.current,  
+                        myGrave: p1GraveRef.current,  
+                    };  
+                    resolveEffect(pendingDiscardEffect, card, 1, passedState);   
+                    setIsDiscarding(false);   
+                    setPendingDiscardEffect(null);   
+                    setIsProcessing(true);   
+                    setTimeout(() => endTurn(1), 1000);   
+                    return;   
+                }   
+   
+                if (selectedCard && !isTargeting) {   
+                    if (card.uid === selectedCard.uid) {   
+                        setSelectedCard(null); setPaymentCards([]);   
+                    } else {   
+                        if (paymentCards.some(c => c.uid === card.uid)) {   
+                            setPaymentCards(prev => prev.filter(c => c.uid !== card.uid));   
+                        } else {   
+                            setPaymentCards(prev => [...prev, card]);   
+                        }   
+                    }   
+                    return;   
+                }   
+                setSelectedCard(card);   
+                setPaymentCards([]);   
+            };   
+   
+            const handlePlayConfirm = () => {   
+                if (!selectedCard) return;   
+                const cost = Math.max(0, selectedCard.strength - costModifier.p1);   
+                const pay = paymentCards.reduce((a,c) => a + c.strength, 0);   
+                if (pay < cost) { addLog(`Forza insufficiente! (${pay}/${cost})`); return; }   
+   
+                const usedIds = [selectedCard.uid, ...paymentCards.map(c => c.uid)];   
+                setP1Hand(prev => prev.filter(c => !usedIds.includes(c.uid)));   
+                setP1Grave(prev => [...prev, ...paymentCards]);   
+   
+                const played = { ...selectedCard, tempStrength: 0 }; // Ensure tempStrength is initialized   
+   
+                // Alfa della Foresta Primordiale Logic   
+                const alfa = p1Field.find(c => c.effect === EFFECTS.FACTION_WIDE_BUFF_AURA);   
+                if (alfa && played.faction === FACTIONS.BEAST && played.uid !== alfa.uid) {   
+                    played.currentStrength += alfa.val;   
+                    addLog(`${played.name} entra con +${alfa.val}F permanente grazie a ${alfa.name}!`);   
+                }   
+                   
+                setP1Field(prev => [...prev, played]);   
+   
+                if (needsTarget(played) || played.effect === EFFECTS.SACRIFICE_ALLY_BUFF || played.effect === EFFECTS.SACRIFICE_DRAW) {   
+                    const targetsAlly = [EFFECTS.BUFF_TARGET_ALLY_PERMANENT, EFFECTS.TEMP_BUFF_TARGET_ALLY, EFFECTS.TRANSFER_STRENGTH].includes(played.effect);   
+                    const targetsEnemy = [EFFECTS.DESTROY_WEAK, EFFECTS.DESTROY_EXACT, EFFECTS.DEBUFF_ENEMY, EFFECTS.BOUNCE_ENEMY, EFFECTS.TEMP_DEBUFF_ENEMY, EFFECTS.DESTROY_WOUNDED, EFFECTS.STEAL_STRENGTH].includes(played.effect);   
+                       
+                    let validTargetsExist = true;   
+                    if (targetsAlly) {   
+                        // A creature can target itself, so there's always a valid target.   
+                        // A spell needs an existing target on the field.   
+                        if (played.type !== CARD_TYPES.CREATURE && p1Field.length === 0) {   
+                            validTargetsExist = false;   
+                        }   
+                    }   
+                    if (targetsEnemy && p2Field.length === 0) validTargetsExist = false;   
+                    if ((played.effect === EFFECTS.SACRIFICE_ALLY_BUFF || played.effect === EFFECTS.SACRIFICE_DRAW) && p1Field.filter(c => c.uid !== played.uid).length === 0) validTargetsExist = false;   
+   
+                    if (validTargetsExist) {   
+                        setIsTargeting(true);   
+                        setPendingEffect(played);   
+                        setSelectedCard(null);   
+                        setPaymentCards([]);   
+                        addLog("Seleziona un bersaglio...");   
+                    } else {   
+                        addLog("Nessun bersaglio valido per l'abilità.");   
+                        resolveEffect(played, null, 1);   
+                        setSelectedCard(null);   
+                        setPaymentCards([]);   
+                        setIsProcessing(true);   
+                        setTimeout(() => endTurn(1), 1000);   
+                    }   
+                } else if (played.effect === EFFECTS.DISCARD_THEN_DRAW) {   
+                    setIsDiscarding(true);   
+                    setPendingDiscardEffect(played);   
+                    setSelectedCard(null);   
+                    setPaymentCards([]);   
+                    addLog("Seleziona una carta da scartare...");   
+                }   
+                else {   
+                    resolveEffect(played, null, 1);   
+                    setSelectedCard(null);   
+                    setPaymentCards([]);   
+                    setIsProcessing(true);   
+                    setTimeout(() => endTurn(1), 1000);    
+                }   
+            };   
+   
+            const handleTargetClick = (target) => {   
+                if (!isTargeting || !pendingEffect) return;   
+   
+                const isMyUnit = p1Field.some(c => c.uid === target.uid);   
+                const isEnemyUnit = p2Field.some(c => c.uid === target.uid);   
+   
+                const targetsAlly = [EFFECTS.BUFF_TARGET_ALLY_PERMANENT, EFFECTS.TEMP_BUFF_TARGET_ALLY, EFFECTS.TRANSFER_STRENGTH].includes(pendingEffect.effect);   
+                const targetsEnemy = [EFFECTS.DESTROY_WEAK, EFFECTS.DESTROY_EXACT, EFFECTS.DEBUFF_ENEMY, EFFECTS.BOUNCE_ENEMY, EFFECTS.TEMP_DEBUFF_ENEMY, EFFECTS.DESTROY_WOUNDED, EFFECTS.AURA_DEBUFF_ENEMY, EFFECTS.STEAL_STRENGTH].includes(pendingEffect.effect);   
+   
+                let valid = false;   
+                if (targetsAlly) {   
+                    if (isMyUnit) valid = true;   
+                    else { addLog("Devi selezionare un'unità ALLEATA!"); return; }   
+                } else if (targetsEnemy) {   
+                    if (isEnemyUnit) valid = true;   
+                    else { addLog("Devi selezionare un'unità NEMICA!"); return; }   
+                } else if (pendingEffect.effect === EFFECTS.SACRIFICE_ALLY_BUFF || pendingEffect.effect === EFFECTS.SACRIFICE_DRAW) {   
+                     if (isMyUnit && target.faction === FACTIONS.BEAST) valid = true;   
+                    else { addLog("Devi sacrificare una Bestia ALLEATA!"); return; }   
+                }   
+                   
+                if (valid) {   
+                    const passedState = {  
+                        myField: p1FieldRef.current,  
+                        enemyField: p2FieldRef.current,  
+                        myGrave: p1GraveRef.current,  
+                    };  
+                    resolveEffect(pendingEffect, target, 1, passedState);   
+                    setIsTargeting(false);   
+                    setPendingEffect(null);   
+                    setIsProcessing(true);   
+                    setTimeout(() => endTurn(1), 1000);   
+                }   
+            };   
+   
+            const needsTarget = (c) => [  
+                EFFECTS.DESTROY_WEAK,  
+                EFFECTS.DESTROY_EXACT,  
+                EFFECTS.DEBUFF_ENEMY,  
+                EFFECTS.BOUNCE_ENEMY,  
+                EFFECTS.BUFF_TARGET_ALLY_PERMANENT,  
+                EFFECTS.TEMP_DEBUFF_ENEMY,  
+                EFFECTS.TEMP_BUFF_TARGET_ALLY,  
+                EFFECTS.DESTROY_WOUNDED,  
+                EFFECTS.TRANSFER_STRENGTH,  
+                EFFECTS.AURA_DEBUFF_ENEMY,  
+                EFFECTS.STEAL_STRENGTH  
+            ].includes(c.effect);  
+   
+            const resolveEffect = (source, target, pid, passedState) => {  
+                const isP1 = pid === 1;  
+                const enemyFieldSetter = isP1 ? setP2Field : setP1Field;  
+                const myFieldSetter = isP1 ? setP1Field : setP2Field;  
+                const enemyGraveSetter = isP1 ? setP2Grave : setP1Grave;  
+                const myGraveSetter = isP1 ? setP1Grave : setP2Grave;  
+                const enemyHandSetter = isP1 ? setP2Hand : setP1Hand;  
+                const myHandSetter = isP1 ? setP1Hand : setP2Hand;  
+                const myDeckSetter = isP1 ? setP1Deck : setP2Deck;  
+                  
+                // Use passed state if available, otherwise fallback to refs  
+                const myField = passedState ? passedState.myField : (isP1 ? p1FieldRef.current : p2FieldRef.current);  
+                const enemyField = passedState ? passedState.enemyField : (isP1 ? p2FieldRef.current : p1FieldRef.current);  
+                const myGrave = passedState ? passedState.myGrave : (isP1 ? p1GraveRef.current : p2GraveRef.current);  
+  
+                let msg = `${source.name}: `;  
+                let creatureDestroyed = null;  
+   
+                switch(source.effect) {   
+                    case EFFECTS.DESTROY_WEAK:   
+                        if (target && getEffectiveStrength(target) <= source.val) {   
+                             if (protection[isP1 ? 'p2_ally' : 'p1_ally'] === target.uid) {   
+                                msg += `${target.name} è protetto e non può essere distrutto!`;   
+                                break;   
+                            }   
+                            const isTargetProtected = target.effect === EFFECTS.PROTECT_FROM_WEAK_DESTRUCTION && getEffectiveStrength(target) <= 1 && source.val <= 1;   
+                            if (!isTargetProtected) {   
+                                enemyFieldSetter(prev => prev.filter(c => c.uid !== target.uid));   
+                                enemyGraveSetter(prev => [target, ...prev]);   
+                                creatureDestroyed = target;   
+                                msg += `Distrutto ${target.name}!`;   
+                            } else {   
+                                msg += `${target.name} protetto!`;   
+                            }   
+                        } else msg += "Fallito.";   
+                        break;   
+                    case EFFECTS.DESTROY_EXACT:   
+                        if (target && getEffectiveStrength(target) === source.val) {   
+                             if (protection[isP1 ? 'p2_ally' : 'p1_ally'] === target.uid) {   
+                                msg += `${target.name} è protetto e non può essere distrutto!`;   
+                                break;   
+                            }   
+                            enemyFieldSetter(prev => prev.filter(c => c.uid !== target.uid));   
+                            enemyGraveSetter(prev => [target, ...prev]);   
+                            creatureDestroyed = target;   
+                            msg += `Distrutto ${target.name}!`;   
+                        }   
+                        break;   
+                    case EFFECTS.DEBUFF_ENEMY:   
+                        if (target) {   
+                             if (protection[isP1 ? 'p2_all' : 'p1_all']) {   
+                                msg += `Le creature nemiche sono protette dai debuff!`;   
+                                break;   
+                            }   
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? {...c, currentStrength: Math.max(0, c.currentStrength - source.val)} : c));   
+                            msg += `Indebolisce ${target.name}.`;   
+                        }   
+                        break;   
+                    case EFFECTS.BUFF_SELF_FACTION:   
+                        myFieldSetter(prev => prev.map(c => c.faction === source.faction && c.uid !== source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                        msg += "Potenziamento.";   
+                        break;   
+                    case EFFECTS.SCRY:   
+                        myDeckSetter(prevDeck => {   
+                            if (prevDeck.length > 0) {   
+                                const topCard = prevDeck[0];   
+                                setChoiceState({   
+                                    title: "Scruta la prima carta",   
+                                    options: [topCard],   
+                                    actions: [   
+                                        { label: "Tieni in Cima", callback: () => {   
+                                            addLog(`${topCard.name} rimane in cima.`);   
+                                            setChoiceState(null);   
+                                            setIsProcessing(true);   
+                                            setTimeout(() => endTurn(pid), 1000);   
+                                        }},   
+                                        { label: "Metti in Fondo", callback: () => {   
+                                            myDeckSetter(d => [...d.slice(1), d[0]]);   
+                                            addLog(`${topCard.name} spostata in fondo.`);   
+                                            setChoiceState(null);   
+                                            setIsProcessing(true);   
+                                            setTimeout(() => endTurn(pid), 1000);   
+                                        }}   
+                                    ]   
+                                });   
+                                return prevDeck;   
+                            }   
+                             return prevDeck;   
+                        });   
+                        break;   
+                    case EFFECTS.PACK_BONUS:   
+                        const beastsCount = myField.filter(c => c.faction === FACTIONS.BEAST && c.uid !== source.uid).length;   
+                        if (beastsCount > 0) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            msg += "Branco attivo!";   
+                        }   
+                        break;   
+                    case EFFECTS.TEMP_BUFF:   
+                        myFieldSetter(prev => prev.map(c => c.uid === source.uid ? {...c, tempStrength: c.tempStrength + source.val} : c));   
+                        msg += "Furia!";   
+                        break;   
+                    case EFFECTS.SACRIFICE_ALLY_BUFF:   
+                        if (target) {   
+                            myFieldSetter(prev => prev.filter(c => c.uid !== target.uid).map(c => c.uid === source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            myGraveSetter(prev => [target, ...prev]);   
+                            msg += `Divora ${target.name}!`;   
+                        }   
+                        break;   
+                    case EFFECTS.SACRIFICE_DRAW:   
+                        if (target) {   
+                            myFieldSetter(prev => prev.filter(c => c.uid !== target.uid));   
+                            myGraveSetter(prev => [target, ...prev]);   
+                            drawCards(pid, source.val);   
+                            msg += "Sacrificio completato.";   
+                        }   
+                        break;   
+                    case EFFECTS.CONDITIONAL_BUFF_ENEMY_FIELD:   
+                        const strongEnemies = enemyField.filter(c => getEffectiveStrength(c) >= 3).length;   
+                        if (strongEnemies > 0) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            msg += "Reazione!";   
+                        }   
+                        break;   
+                    case EFFECTS.LOOT:   
+                        drawCards(pid, 1);   
+                        setTimeout(() => {   
+                            myHandSetter(currentHand => {   
+                                setChoiceState({   
+                                    title: "Scegli una carta da scartare",   
+                                    options: currentHand,   
+                                    callback: (choice) => {   
+                                        myHandSetter(prev => prev.filter(c => c.uid !== choice.uid));   
+                                        myGraveSetter(prev => [choice, ...prev]);   
+                                        addLog(`Scartato ${choice.name}.`);   
+                                        setChoiceState(null);   
+                                        setIsProcessing(true);   
+                                        setTimeout(() => endTurn(pid), 1000);   
+                                    }   
+                                });   
+                                return currentHand;   
+                            });   
+                        }, 250); // Small delay to allow draw to resolve   
+                        msg = "Pesca 1, poi scegli cosa scartare...";   
+                        break;   
+                    case EFFECTS.AURA_DEBUFF_ENEMY:   
+                        if (target) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? { ...c, targetUid: target.uid } : c));   
+                            msg += `Lo sguardo di ${source.name} si fissa su ${target.name}!`;   
+                        }   
+                        break;   
+                    case EFFECTS.AOE_DEBUFF:   
+                        if (protection[isP1 ? 'p2_all' : 'p1_all']) {   
+                            msg += `Le creature nemiche sono protette dai debuff!`;   
+                            break;   
+                        }   
+                        enemyFieldSetter(prev => prev.map(c => ({...c, currentStrength: Math.max(0, c.currentStrength - source.val)})));   
+                        msg += "Onda d'urto!";   
+                        break;   
+                    case EFFECTS.DISCARD_OPPONENT:   
+                        enemyHandSetter(prev => {   
+                            if (prev.length === 0) return prev;   
+                            const r = Math.floor(Math.random()*prev.length);   
+                            const discarded = prev[r];   
+                            enemyGraveSetter(g => [discarded, ...g]);   
+                            msg += "Nemico scarta.";   
+                            return prev.filter((_,i) => i !== r);   
+                        });   
+                        break;   
+                    case EFFECTS.REVIVE_WEAK_FIELD:   
+                        const revivableF = myGrave.filter(c => c.type === CARD_TYPES.CREATURE && c.strength <= source.val);   
+                        if (revivableF.length > 0) {   
+                            const cardFromGrave = revivableF[0];   
+                            const toRevive = { ...cardFromGrave, currentStrength: cardFromGrave.strength, tempStrength: 0 };   
+                            myGraveSetter(prev => prev.filter(c => c.uid !== toRevive.uid));   
+                            myFieldSetter(prev => [...prev, toRevive]);   
+                            msg += `${toRevive.name} risorge!`;   
+                        }   
+                        break;   
+                    case EFFECTS.BOUNCE_ENEMY:   
+                        if (target) {   
+                            enemyFieldSetter(prev => prev.filter(c => c.uid !== target.uid));   
+                            enemyHandSetter(prev => [target, ...prev]);   
+                            msg += "Rimbalzato!";   
+                        }   
+                        break;   
+                    case EFFECTS.REVIVE_WEAK_HAND:   
+                        const revivableH = myGrave.filter(c => c.type === CARD_TYPES.CREATURE && c.strength <= source.val);   
+                        if (revivableH.length > 0) {   
+                            const cardFromGrave = revivableH[0];   
+                            const toRevive = { ...cardFromGrave, currentStrength: cardFromGrave.strength, tempStrength: 0 };   
+                            myGraveSetter(prev => prev.filter(c => c.uid !== toRevive.uid));   
+                            myHandSetter(prev => [...prev, toRevive]);   
+                            msg += `Recuperato ${toRevive.name}!`;   
+                        }   
+                        break;   
+                    case EFFECTS.BUFF_TARGET_ALLY_PERMANENT:   
+                        if (target) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === target.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            msg += `Potenziato ${target.name}.`;   
+                        }   
+                        break;   
+                    case EFFECTS.TEMP_DEBUFF_ENEMY:   
+                        if (target) {   
+                             if (protection[isP1 ? 'p2_all' : 'p1_all']) {   
+                                msg += `Le creature nemiche sono protette dai debuff!`;   
+                                break;   
+                            }   
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? {...c, tempStrength: c.tempStrength - source.val} : c));   
+                            msg += `Indebolito ${target.name} temporaneamente.`;   
+                        }   
+                        break;   
+                    case EFFECTS.TEMP_BUFF_TARGET_ALLY:   
+                        if (target) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === target.uid ? {...c, tempStrength: c.tempStrength + source.val} : c));   
+                            msg += `Potenziato ${target.name} temporaneamente.`;   
+                        }   
+                        break;   
+                    case EFFECTS.DESTROY_WOUNDED:   
+                        if (target && getEffectiveStrength(target) < target.strength) {   
+                            enemyFieldSetter(prev => prev.filter(c => c.uid !== target.uid));   
+                            enemyGraveSetter(prev => [target, ...prev]);   
+                            creatureDestroyed = target;   
+                            msg += `Distrutto ${target.name} ferito!`;   
+                        }   
+                        break;   
+                    case EFFECTS.DISCARD_THEN_DRAW:   
+                        if (target) {   
+                            myHandSetter(prev => prev.filter(c => c.uid !== target.uid));   
+                            myGraveSetter(prev => [target, ...prev]);   
+                            drawCards(pid, 1);   
+                            msg += `Scartato ${target.name} per pescare una nuova carta.`;   
+                        }   
+                        break;   
+                    case EFFECTS.AOE_TEMP_DEBUFF:   
+                        enemyFieldSetter(prev => prev.map(c => ({...c, tempStrength: c.tempStrength - source.val})));   
+                        msg += "Onda di debolezza!";   
+                        break;   
+                    case EFFECTS.SCRY_1_NO_CHOICE:   
+                        myDeckSetter(prevDeck => {   
+                            if (prevDeck.length > 0) {   
+                                const topCard = prevDeck[0];   
+                                setChoiceState({   
+                                    title: "Prima Carta del Mazzo",   
+                                    options: [topCard],   
+                                    actions: [   
+                                        { label: "OK", callback: () => {   
+                                            addLog(`Hai visto ${topCard.name}.`);   
+                                            setChoiceState(null);   
+                                            setIsProcessing(true);   
+                                            setTimeout(() => endTurn(pid), 1000);   
+                                        }}   
+                                    ]   
+                                });   
+                                return prevDeck;   
+                            }   
+                            return prevDeck;   
+                        });   
+                        break;   
+                    case EFFECTS.SCRY_2_SPECIAL:   
+                        myDeckSetter(prevDeck => {   
+                            if (prevDeck.length >= 2) {   
+                                const top = prevDeck[0];   
+                                const second = prevDeck[1];   
+                                setChoiceState({   
+                                    effect: source,   
+                                    options: [top, second],   
+                                    callback: (choice) => {   
+                                        const other = choice.uid === top.uid ? second : top;   
+                                        myDeckSetter(d => [choice, ...d.slice(2), other]);   
+                                        addLog("Scry 2 completato.");   
+                                        setIsProcessing(true);   
+                                        setTimeout(() => endTurn(pid), 1000);   
+                                    }   
+                                });   
+                                return prevDeck.slice(2); // Temporarily remove cards from deck   
+                            }   
+                            return prevDeck;   
+                        });   
+                        break;   
+                    case EFFECTS.TRANSFER_STRENGTH:   
+                        if (target) {   
+                            myFieldSetter(prev => {   
+                                let strengthToTransfer = 0;   
+                                const newField = prev.map(c => {   
+                                    if (c.uid === target.uid) {   
+                                        strengthToTransfer = source.val;   
+                                        return {...c, currentStrength: Math.max(0, c.currentStrength - source.val)};   
+                                    }   
+                                    return c;   
+                                });   
+                                return newField.map(c => {   
+                                    if (c.uid === source.uid) {   
+                                        return {...c, currentStrength: c.currentStrength + strengthToTransfer};   
+                                    }   
+                                    return c;   
+                                });   
+                            });   
+                            msg += `Trasferita forza da ${target.name}.`;   
+                        }   
+                        break;   
+                    case EFFECTS.PACK_BONUS_2:   
+                        if (myField.filter(c => c.faction === FACTIONS.BEAST && c.uid !== source.uid).length >= 2) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            msg += "Branco (2) attivo!";   
+                        }   
+                        break;   
+                    case EFFECTS.PACK_BONUS_3:   
+                        if (myField.filter(c => c.faction === FACTIONS.BEAST && c.uid !== source.uid).length >= 3) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            msg += "Branco (3) attivo!";   
+                        }   
+                        break;   
+                    case EFFECTS.CONDITIONAL_BUFF_ENEMY_COUNT:   
+                        if (enemyField.length >= 3) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            msg += "Tattica di branco!";   
+                        }   
+                        break;   
+                    case EFFECTS.CONDITIONAL_BUFF_ENEMY_STRENGTH:   
+                        if (enemyField.some(c => getEffectiveStrength(c) >= 4)) {   
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? {...c, currentStrength: c.currentStrength + source.val} : c));   
+                            msg += "Istinto predatorio!";   
+                        }   
+                        break;   
+                    case EFFECTS.SACRIFICE_ALLY_TEMP_BUFF:   
+                         if (target) {   
+                            myFieldSetter(prev => prev.filter(c => c.uid !== target.uid).map(c => c.uid === source.uid ? {...c, tempStrength: c.tempStrength + source.val} : c));   
+                            myGraveSetter(prev => [target, ...prev]);   
+                            msg += `Divora ${target.name} per un potenziamento temporaneo!`;   
+                        }   
+                        break;   
+                    case EFFECTS.REDUCE_NEXT_CREATURE_COST:   
+                        setCostModifier(prev => ({...prev, [isP1 ? 'p1' : 'p2']: prev[isP1 ? 'p1' : 'p2'] + source.val}));   
+                        msg += `Il costo della prossima creatura è ridotto di ${source.val}.`;   
+                        break;   
+                    case EFFECTS.INCREASE_OPPONENT_COST:   
+                        setCostModifier(prev => ({...prev, [isP1 ? 'p2' : 'p1']: prev[isP1 ? 'p2' : 'p1'] + source.val}));   
+                        msg += `Il costo della prossima carta nemica è aumentato di ${source.val}.`;   
+                        break;   
+                    case EFFECTS.PROTECT_ALLY_FROM_DESTRUCTION:   
+                        if (target) {   
+                            setProtection(prev => ({...prev, [isP1 ? 'p1_ally' : 'p2_ally']: target.uid}));   
+                            msg += `${target.name} è protetto dalla distruzione per questo turno.`;   
+                        }   
+                        break;   
+                    case EFFECTS.PROTECT_ALLIES_FROM_DEBUFF:   
+                        setProtection(prev => ({...prev, [isP1 ? 'p1_all' : 'p2_all']: true}));   
+                        msg += `Le tue creature sono protette dai debuff per questo turno.`;   
+                        break;   
+                    case EFFECTS.REVIVE_FROM_GRAVE_CHOICE:   
+                        const options = myGrave.slice(0, 2);   
+                        if (options.length > 0) {   
+                            setChoiceState({   
+                                effect: source,   
+                                options: options,   
+                                callback: (choice) => {   
+                                    const toRevive = { ...choice, currentStrength: choice.strength, tempStrength: 0 };   
+                                    myGraveSetter(prev => prev.filter(c => c.uid !== toRevive.uid));   
+                                    myHandSetter(prev => [...prev, toRevive]);   
+                                    addLog(`Recuperato ${toRevive.name} dal cimitero.`);   
+                                    setIsProcessing(true);   
+                                    setTimeout(() => endTurn(pid), 1000);   
+                                }   
+                            });   
+                        }   
+                        break;  
+                    case EFFECTS.STEAL_STRENGTH:  
+                        if (target) {  
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, currentStrength: Math.max(0, c.currentStrength - source.val) } : c));  
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? { ...c, currentStrength: c.currentStrength + source.val } : c));  
+                            msg += `Ruba ${source.val} forza da ${target.name}!`;  
+                        }  
+                        break;  
+                    case EFFECTS.GROW_ON_SPELL_KILL:  
+                        // This needs to be handled in the part of the code that resolves spell effects  
+                        msg += "Abilità passiva pronta.";  
+                        break;  
+                    case EFFECTS.START_OF_TURN_DRAW_IF_BEAST:  
+                        // This needs to be handled in the start-of-turn logic  
+                        msg += "Abilità passiva pronta.";  
+                        break;  
+                }   
+   
+                if (creatureDestroyed) {   
+                    // Handle deathrattles   
+                    if (creatureDestroyed.effect === EFFECTS.DEATHRATTLE_REVIVE) {   
+                        const revivable = (isP1 ? p2GraveRef.current : p1GraveRef.current).filter(c => c.type === CARD_TYPES.CREATURE && c.strength <= creatureDestroyed.val);   
+                        if (revivable.length > 0) {   
+                            const toRevive = { ...revivable[0], currentStrength: revivable[0].strength };   
+                            enemyGraveSetter(prev => prev.filter(c => c.uid !== toRevive.uid));   
+                            enemyFieldSetter(prev => [...prev, toRevive]);   
+                            addLog(`${creatureDestroyed.name} Rianima ${toRevive.name}!`);   
+                        }   
+                    }   
+                    if (creatureDestroyed.effect === EFFECTS.DEATHRATTLE_LOOT) {   
+                        drawCards(isP1 ? 2 : 1, 1);   
+                        enemyHandSetter(prev => { if(prev.length>0) { const d=prev[0]; enemyGraveSetter(g=>[d,...g]); return prev.slice(1); } return prev; });   
+                        addLog(`${creatureDestroyed.name} fa pescare e scartare!`);   
+                    }   
+   
+                    const growingCards = myField.filter(c => c.effect === EFFECTS.GROW_ON_ALLY_DEATH && c.faction === FACTIONS.BEAST);   
+                    if (growingCards.length > 0) {   
+                        myFieldSetter(prev => prev.map(c => growingCards.some(g => g.uid === c.uid) ? {...c, currentStrength: c.currentStrength + 1} : c));   
+                        msg += " Bestie cresciute!";   
+                    }   
+                }   
+   
+                if ([CARD_TYPES.SPELL, CARD_TYPES.EVENT].includes(source.type)) {  
+                    myFieldSetter(prev => prev.filter(c => c.uid !== source.uid));  
+                    myGraveSetter(prev => [...prev, source]);  
+                }  
+                addLog(msg);  
+            };  
+   
+            if (gameState === 'MENU') return <StartScreen onStart={startGame} />;   
+   
+            const totalPay = paymentCards.reduce((a,c) => a + c.strength, 0);   
+            const needed = selectedCard ? selectedCard.strength : 0;   
+            const canPlay = selectedCard && totalPay >= needed;   
+   
+            const isDeckTargeting = isTargeting && pendingEffect && [EFFECTS.SCRY].includes(pendingEffect.effect);   
+               
+            const isAllyTargeting = isTargeting && pendingEffect && [   
+                EFFECTS.SACRIFICE_ALLY_BUFF,    
+                EFFECTS.SACRIFICE_DRAW,    
+                EFFECTS.TEMP_BUFF_TARGET_ALLY,    
+                EFFECTS.BUFF_TARGET_ALLY_PERMANENT   
+            ].includes(pendingEffect.effect);   
+   
+            const isEnemyTargeting = isTargeting && !isDeckTargeting && !isAllyTargeting;   
+   
+            const handleChoice = (choice) => {   
+                if (choiceState && choiceState.callback) {   
+                    choiceState.callback(choice);   
+                }   
+                setChoiceState(null);   
+            };   
+   
+            const p1FactionBG = playerFaction === FACTIONS.HUMAN ? 'human-bg' : playerFaction === FACTIONS.UNDEAD ? 'undead-bg' : 'beast-bg';   
+            const p2FactionBG = enemyFaction === FACTIONS.HUMAN ? 'human-bg' : enemyFaction === FACTIONS.UNDEAD ? 'undead-bg' : 'beast-bg';   
+   
+            return (   
+                <div className="h-screen w-full flex flex-col bg-gray-900 overflow-hidden text-sm relative">   
+                    <GraveyardModal cards={graveyardViewer} onClose={() => setGraveyardViewer(null)} />   
+                    <ChoiceModal choiceState={choiceState} onChoice={handleChoice} />   
+                    {/* ENEMY AREA */}   
+                    <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 border-yellow-700 min-h-0`}>   
+                        <div className="h-10 flex items-center justify-between px-4 bg-black/50 shadow-md z-10 shrink-0">   
+                            <span className="font-bold font-fantasy text-base text-gray-400">Nemico: {enemyFaction.toUpperCase()} ({p2Hand.length})</span>   
+                            <div className="flex gap-4 items-center">   
+                                <VictoryThresholds claimedThresholds={claimedThresholds} />   
+                                <div className="text-xl font-bold text-red-400 drop-shadow ml-2">🛡️ {p2Score}</div>   
+                                <div className="text-sm font-bold text-yellow-300 ml-2 border border-yellow-500 rounded px-2">VP: {p2VP}/6</div>   
+                            </div>   
+                        </div>   
+                        <div className="flex-1 flex px-2 overflow-hidden">   
+                            <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">   
+                                {p2Field.map(c => <Card key={c.uid} card={c} onClick={handleTargetClick} isValidTarget={isTargeting && isEnemyTargeting} />)}   
+                            </div>   
+                            <div className="w-24 flex flex-col justify-center items-center gap-4 p-2 bg-black/30">   
+                                <Pile type="DECK" count={p2Deck.length} />   
+                                <Pile type="GRAVE" count={p2Grave.length} topCard={p2Grave[0]} onClick={() => setGraveyardViewer(p2Grave)} />   
+                            </div>   
+                        </div>   
+                    </div>   
+   
+                    {/* MID BAR */}  
+                    <div className="h-10 bg-black flex items-center justify-between px-4 z-20 border-y border-gray-600 shadow-xl shrink-0">  
+                        <div className="w-2/3 h-full overflow-y-auto scrollbar-hide py-1">  
+                            {logs.map((log, i) => (  
+                                <div key={i} className="text-sm text-gray-100 opacity-90 hover:opacity-100 font-mono">{log}</div>  
+                            ))}  
+                        </div>  
+                        <div className="flex gap-2 items-center">  
+                            {gameState === 'PLAYER_TURN' && !isProcessing && (  
+                                <>  
+                                    {selectedCard && !isTargeting && (  
+                                        <div className="flex items-center gap-2">  
+                                            <span className={`text-xs font-bold ${canPlay ? 'text-green-400' : 'text-red-400'}`}>  
+                                                Costo: {totalPay}/{needed}  
+                                            </span>  
+                                            <button disabled={!canPlay} onClick={handlePlayConfirm} className={`px-3 py-1 rounded text-xs font-bold shadow ${canPlay ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}>GIOCA</button>  
+                                            <button onClick={()=>{setSelectedCard(null); setPaymentCards([]);}} className="text-[10px] text-gray-400 hover:text-white underline">Annulla</button>  
+                                        </div>  
+                                    )}  
+                                    {!selectedCard && !isTargeting && (  
+                                        <button onClick={() => endTurn(1)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-xs transition">PASSA</button>  
+                                    )}  
+                                    {isTargeting && <div className="text-yellow-400 font-bold animate-pulse text-xs px-2 border border-yellow-500 rounded bg-yellow-900/50">BERSAGLIO!</div>}  
+                                </>  
+                            )}  
+                            {isProcessing && <div className="text-gray-400 italic text-xs animate-pulse">...</div>}  
+                        </div>  
+                    </div>  
+  
+                    {/* PLAYER AREA */}  
+                    <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700 min-h-0`}>  
+                        <div className="h-10 flex items-center justify-between px-4 bg-black/50 shadow-md z-10 shrink-0">  
+                             <span className={`font-bold font-fantasy text-base ${playerFaction === FACTIONS.HUMAN ? 'text-blue-400' : playerFaction === FACTIONS.UNDEAD ? 'text-purple-400' : 'text-green-400'}`}>  
+                                {playerFaction === FACTIONS.HUMAN ? 'Alleanza Umana' : playerFaction === FACTIONS.UNDEAD ? 'Orda Non Morta' : 'Bestie Selvagge'}  
+                            </span>  
+                            <div className="flex gap-4 items-center">  
+                                <VictoryThresholds claimedThresholds={claimedThresholds} />  
+                                <div className={`text-xl font-bold drop-shadow ml-2 ${playerFaction === FACTIONS.HUMAN ? 'text-blue-400' : playerFaction === FACTIONS.UNDEAD ? 'text-purple-400' : 'text-green-400'}`}>🛡️ {p1Score}</div>  
+                                <div className="text-sm font-bold text-yellow-300 ml-2 border border-yellow-500 rounded px-2">VP: {p1VP}/6</div>  
+                            </div>  
+                        </div>  
+                        <div className="flex-1 flex px-2 overflow-hidden">  
+                            <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">  
+                                {p1Field.map(c => (  
+                                    <Card  
+                                        key={c.uid}  
+                                        card={c}  
+                                        onClick={isAllyTargeting ? handleTargetClick : ()=>{}}  
+                                        isValidTarget={isAllyTargeting}  
+                                    />  
+                                ))}  
+                            </div>  
+                            <div className="w-24 flex flex-col justify-center items-center gap-4 p-2 bg-black/30">  
+                                <Pile type="DECK" count={p1Deck.length} onClick={isDeckTargeting ? () => handleTargetClick(p1Deck[0]) : ()=>{}} isValidTarget={isDeckTargeting} />  
+                                <Pile type="GRAVE" count={p1Grave.length} topCard={p1Grave[0]} onClick={() => setGraveyardViewer(p1Grave)} />  
+                            </div>  
+                        </div>  
+                    </div>  
+  
+                    {/* HAND AREA */}  
+                    <div className="bg-black/80 backdrop-blur-sm border-t-2 border-yellow-700 flex flex-col shadow-2xl z-30 h-56 shrink-0">  
+                        <div className="flex-1 flex items-center gap-2 px-4 overflow-x-auto overflow-y-hidden py-2">  
+                            {p1Hand.map(c => (  
+                                <Card  
+                                    key={c.uid}  
+                                    card={c}  
+                                    isSelected={selectedCard && selectedCard.uid === c.uid}  
+                                    isPaymentSelected={paymentCards.some(x => x.uid === c.uid)}  
+                                    onClick={handleHandClick}  
+                                />  
+                            ))}  
+                        </div>  
+                    </div>  
+                </div>   
+            );   
+        };   
+   
+        const root = ReactDOM.createRoot(document.getElementById('root'));   
+        root.render(<App />);   
+    </script>   
+</body>   
+</html> 
