@@ -350,8 +350,8 @@
         const CARD_TYPES = { CREATURE: 'Creatura', SPELL: 'Magia', EVENT: 'Evento', HERO: 'Eroe' };  
         const HUMAN_DECK_LIST = [
             // UNICHE (2)
-            { name: "Re Aldren, Giudizio della Corona", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'DESTROY_WEAK', val: 4, desc: "Quando entra, distruggi una creatura avversaria con Forza ≤4." },
-            { name: "Lady Evelyne, Luce della Rinascita", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 2, desc: "Quando entra, una tua creatura ottiene +2 Forza permanente." },
+            { name: "Re Aldren, Giudizio della Corona", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'DESTROY_WEAK', val: 4, desc: "Quando entra, distruggi una creatura avversaria con Forza ≤4.", image: "https://raw.githubusercontent.com/caska12-resonance/rwof/refs/heads/main/re-ald.jpg" },
+            { name: "Lady Evelyne, Luce della Rinascita", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'BUFF_TARGET_ALLY_PERMANENT', val: 2, desc: "Quando entra, una tua creatura ottiene +2 Forza permanente.", image: "https://raw.githubusercontent.com/caska12-resonance/rwof/refs/heads/main/lady.jpg" },
             // EPICHE (8)
             { name: "Cavaliere del Sole d'Acciaio", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'DEBUFF_ENEMY', val: 1, desc: "Quando entra, una creatura avversaria perde 1 Forza permanente." },
             { name: "Mastro Stratega Leonhart", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SCRY', val: 1, desc: "Quando entra, guarda la prima carta del mazzo; puoi metterla in fondo." },
@@ -474,7 +474,7 @@
             { name: "Scheletro Animato", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_REVIVE_SELF', val: 0, desc: "Quando questa creatura muore, torna in campo." },
             { name: "Servitore Putrido", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_LOOT', val: 1, desc: "Quando questa creatura muore, pesca una carta e poi scarta una carta." },
             { name: "Zombie Traballante", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_REVIVE', val: 1, desc: "Quando questa creatura muore o viene sacrificata, rianima una creatura con Forza 1 dal tuo cimitero." },
-            { name: "Scheletro Spezzato", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_RANDOM_DEBUFF', val: 1, desc: "Quando questa creatura muore, una creatura avversaria casuale perde 1 Forza permanente." },
+            { name: "Scheletro Spezzato", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_RANDOM_DEBUFF', val: 2, desc: "Quando muore, una creatura avversaria casuale perde 2 forza." },
             { name: "Famelico del Sepolcro", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_RETURN', val: 0, desc: "Quando questa creatura muore, torna nella tua mano." },
             { name: "Soldato Decaduto", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_LOOT', val: 1, desc: "Quando questa creatura muore, pesca una carta e poi scarta una carta." },
             { name: "Ghoul Minore", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'DEATHRATTLE_RETURN', val: 0, desc: "Quando questa creatura muore, torna nella tua mano." },
@@ -492,13 +492,12 @@
         const FACTIONS = { HUMAN: 'human', UNDEAD: 'undead', BEAST: 'beast' };   
            
         // Game Constants - UPDATED SCORING   
-        const WIN_SCORE = 6;   
-        const THRESHOLDS = [   
-            { val: 5, pts: 1, label: "5" },   
-            { val: 10, pts: 1, label: "10" },   
-            { val: 15, pts: 1, label: "15" },   
-            { val: 20, pts: 3, label: "20" },   
-            { val: 30, pts: 5, label: "30" }  
+        const WIN_SCORE = 3;
+        const THRESHOLDS = [
+            { val: 10, pts: 1, label: "10" },
+            { val: 15, pts: 1, label: "15" },
+            { val: 20, pts: 1, label: "20" },
+            { val: 30, pts: 2, label: "30" }
         ];   
    
         const EFFECTS = {   
@@ -910,7 +909,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [p2Grave, setP2Grave] = React.useState([]);   
             const [p2VP, setP2VP] = React.useState(0);   
    
-            const [claimedThresholds, setClaimedThresholds] = React.useState({ 5: null, 10: null, 15: null, 20: null, 30: null });   
+            const [claimedThresholds, setClaimedThresholds] = React.useState({ 10: null, 15: null, 20: null, 30: null });   
    
             const [selectedCard, setSelectedCard] = React.useState(null);   
             const [paymentCards, setPaymentCards] = React.useState([]);   
@@ -998,7 +997,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 
                 setP2Grave(window.p2GraveOverride || []);
                 setP2VP(0);
-                setClaimedThresholds({ 5: null, 10: null, 15: null, 20: null, 30: null });
+                setClaimedThresholds({ 10: null, 15: null, 20: null, 30: null });
                 setLogs([]); 
                 
                 // Coin toss to decide who goes first
@@ -2218,7 +2217,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                             ownerGraveSetter(prev => prev.filter(c => c.uid !== creatureDestroyed.uid));
                             ownerFieldSetter(prev => [...prev, cardToReviveSelf]);
                             break;
-                        case EFFECTS.DEATHRattle_REVIVE_SELF_WEAK:
+                        case EFFECTS.DEATHRATTLE_REVIVE_SELF_WEAK:
                             addLog(`${creatureDestroyed.name} risorge debolmente!`);
                             const cardToReviveWeak = { ...creatureDestroyed, currentStrength: creatureDestroyed.val, tempStrength: 0 };
                              ownerGraveSetter(prev => prev.filter(c => c.uid !== creatureDestroyed.uid));
