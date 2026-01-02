@@ -489,7 +489,54 @@
             { name: "Richiamo del Cimitero", strength: 3, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'REVIVE_WEAK_HAND', val: 2, desc: "Rianima una creatura con Forza 2 dal tuo cimitero nella tua mano." },
         ];
    
-        const FACTIONS = { HUMAN: 'human', UNDEAD: 'undead', BEAST: 'beast' };   
+        const ARCANUM_DECK_LIST = [
+            // UNICHE (2)
+            { name: "Aurelius, l’Architetto", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'DISTORTION', val: 2, desc: "Distorsione: la soglia di vittoria è ridotta di 2." },
+            { name: "Vespera, Regina dei Miraggi", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'unique', effect: 'CREATE_MIRAGE_COPY', val: 1, desc: "Quando entra in campo, crea una copia Miraggio fragile di una creatura in gioco. (La copia ha la stessa Forza base, Costo di Scarto 1.)" },
+            // EPICHE (8)
+            { name: "Drago di Vetro", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
+            { name: "Titano di Quarzo", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE_HEXPROOF_SPELLS', val: 0, desc: "Miraggio. Non può essere distrutto da Incantesimi." },
+            { name: "Cronomas, il Reggente", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'STASIS_STRONGEST', val: 0, desc: "Quando entra in campo, metti in Stasi la creatura nemica con Forza più alta." },
+            { name: "Paradosso Vivente", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SWAP_TOTAL_STRENGTH', val: 0, desc: "Quando entra in campo, fino alla fine del turno scambia la tua Forza totale con quella dell’avversario." },
+            { name: "Custode del Velo", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'PROTECT_MIRAGE_ONCE', val: 0, desc: "Una volta per partita, quando un tuo Miraggio verrebbe distrutto da un effetto bersagliato, invece non viene distrutto." },
+            { name: "Eclissi Temporale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'STASIS_AND_DRAW', val: 0, desc: "Metti in Stasi una creatura nemica. Pesca una carta." },
+            { name: "Portale dell’Oblio", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'EXILE_CREATURE', val: 0, desc: "Rimuovi dal gioco una creatura nemica." },
+            { name: "Anomalia Dimensionale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'SWAP_BASE_STRENGTH', val: 0, desc: "Scambia la Forza base di due creature in campo." },
+            // INSOLITE (12)
+            { name: "Spostatore di Realtà", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'MOVE_MODIFIERS', val: 0, desc: "Sposta tutti i bonus e malus di Forza da una creatura a un’altra." },
+            { name: "Chimera Eterea", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
+            { name: "Muro di Specchi", strength: 0, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'MIRAGE_COPY_STRENGTH', val: 0, desc: "Miraggio. Quando entra, copia la Forza della creatura nemica con Forza più alta." },
+            { name: "Rifrazione Arcana", strength: 2, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'BOUNCE_ALLY_DRAW', val: 0, desc: "Rimanda una creatura in mano. Se è una tua creatura, pesca una carta." },
+            { name: "Ancora di Realtà", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'FREEZE_STRENGTH', val: 0, desc: "Scegli una tua creatura. Fino all’inizio del tuo prossimo turno, la sua Forza non può esser modificata." },
+            { name: "Tessitore di Nebbia", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'TURN_TO_FRAGILE_MIRAGE', val: 0, desc: "Quando entra in campo, scegli una carta in gioco: diventa un Miraggio fragile." },
+            { name: "Eco Fratturato", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'SACRIFICE_MIRAGE_DRAW_3', val: 0, desc: "Distruggi una tua creatura Miraggio. Pesca 3 carte." },
+            { name: "Mago del Flusso", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'SWAP_STRENGTH_ALLY', val: 0, desc: "Quando entra in campo, puoi scambiare la sua Forza con quella di un’altra tua creatura." },
+            { name: "Visione Profetica", strength: 1, type: CARD_TYPES.SPELL, rarity: 'uncommon', effect: 'REORDER_ENEMY_DECK_3', val: 0, desc: "Guarda le prime 3 carte del mazzo avversario e riordinalle." },
+            { name: "Spirito della Lampada", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
+            { name: "Doppiogiochista Arcano", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'BUFF_IF_SPELL_LAST_TURN', val: 2, desc: "Ottiene +2 Forza permanente se l’avversario ha giocato un Incantesimo nel turno precedente." },
+            { name: "Clone Instabile", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'uncommon', effect: 'CLONE_WEAK_CREATURE', val: 2, desc: "Quando entra in campo, diventa una copia di una creatura con Forza 1 o 2 in gioco." },
+            // COMUNI (18)
+            { name: "Guardiano Illusorio", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
+            { name: "Lupo di Vapore", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
+            { name: "Soldato di Vetro", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
+            { name: "Fantasma Minore", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
+            { name: "Dardo di Ghiaccio", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'STASIS', val: 0, desc: "Metti in Stasi una creatura nemica." },
+            { name: "Svanire nel Nulla", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'SILENCE_TARGET', val: 0, desc: "Scegli una creatura nemica. Perde tutte le sue abilità fino alla fine del turno." },
+            { name: "Soffio Gelido", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'DEBUFF_ENEMY', val: 1, desc: "Una creatura nemica perde 1 Forza permanente." },
+            { name: "Tocco del Vuoto", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura con Forza 1." },
+            { name: "Studioso delle Rune", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SCRY_1_NO_CHOICE', val: 0, desc: "Quando entra in campo, guarda la prima carta del tuo mazzo." },
+            { name: "Costrutto di Mana", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Tomo Volante", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Sfera di Energia", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Servitore del Conclave", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Elementale Grezzo", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Golem di Argilla", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Sentinella della Torre", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Scriba Silenzioso", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+            { name: "Scheggia di Aether", strength: 1, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'NONE', val: 0, desc: "Nessuna abilità." },
+        ];
+
+        const FACTIONS = { HUMAN: 'human', UNDEAD: 'undead', BEAST: 'beast', ARCANUM: 'arcanum' };
            
         // Game Constants - UPDATED SCORING   
         const WIN_SCORE = 3;
@@ -521,6 +568,30 @@
             HEXPROOF: 'HEXPROOF',   
             GROW_ON_KILL: 'GROW_ON_KILL',   
                
+            // ARCANUM EFFECTS
+            DISTORTION: 'DISTORTION',
+            CREATE_MIRAGE_COPY: 'CREATE_MIRAGE_COPY',
+            MIRAGE: 'MIRAGE',
+            MIRAGE_HEXPROOF_SPELLS: 'MIRAGE_HEXPROOF_SPELLS',
+            STASIS_STRONGEST: 'STASIS_STRONGEST',
+            SWAP_TOTAL_STRENGTH: 'SWAP_TOTAL_STRENGTH',
+            PROTECT_MIRAGE_ONCE: 'PROTECT_MIRAGE_ONCE',
+            STASIS_AND_DRAW: 'STASIS_AND_DRAW',
+            EXILE_CREATURE: 'EXILE_CREATURE',
+            SWAP_BASE_STRENGTH: 'SWAP_BASE_STRENGTH',
+            MOVE_MODIFIERS: 'MOVE_MODIFIERS',
+            MIRAGE_COPY_STRENGTH: 'MIRAGE_COPY_STRENGTH',
+            BOUNCE_ALLY_DRAW: 'BOUNCE_ALLY_DRAW',
+            FREEZE_STRENGTH: 'FREEZE_STRENGTH',
+            TURN_TO_FRAGILE_MIRAGE: 'TURN_TO_FRAGILE_MIRAGE',
+            SACRIFice_MIRAGE_DRAW_3: 'SACRIFICE_MIRAGE_DRAW_3',
+            SWAP_STRENGTH_ALLY: 'SWAP_STRENGTH_ALLY',
+            REORDER_ENEMY_DECK_3: 'REORDER_ENEMY_DECK_3',
+            BUFF_IF_SPELL_LAST_TURN: 'BUFF_IF_SPELL_LAST_TURN',
+            CLONE_WEAK_CREATURE: 'CLONE_WEAK_CREATURE',
+            STASIS: 'STASIS',
+            SILENCE_TARGET: 'SILENCE_TARGET',
+
             // BEAST EFFECTS   
             PACK_BONUS: 'PACK_BONUS',   
             FACTION_WIDE_BUFF_AURA: 'FACTION_WIDE_BUFF_AURA',   
@@ -636,6 +707,7 @@
         };   
    
         const getEffectiveStrength = (card) => {   
+            if (card.isStasis) return 0;
             return Math.max(0, (card.currentStrength || 0) + (card.tempStrength || 0));   
         }   
    
@@ -658,7 +730,7 @@
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-30"></div>
         <h1 className="text-5xl md:text-7xl font-fantasy text-yellow-500 mb-4 drop-shadow-xl animate-pulse z-10">RESONANCE</h1>
         <h2 className="text-xl text-gray-400 mb-12 z-10">WAR OF FACTION</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl px-4 z-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-5xl px-4 z-10">
             <div onClick={() => onStart(FACTIONS.HUMAN)} className="group bg-blue-900/40 border border-blue-500/50 p-6 rounded-xl cursor-pointer hover:bg-blue-800/60 transition flex flex-col items-center shadow-2xl hover:scale-105">
                 <div className="w-16 h-16 mb-4 flex items-center justify-center text-5xl">
                     <span>🛡️</span>
@@ -679,6 +751,13 @@
                 </div>
                 <h3 className="text-xl font-bold text-green-200">BESTIE</h3>
                 <p className="text-xs text-center text-gray-400 mt-2">Branco, Furia, Istinto.</p>
+            </div>
+            <div onClick={() => onStart(FACTIONS.ARCANUM)} className="group bg-gray-700/40 border border-gray-400/50 p-6 rounded-xl cursor-pointer hover:bg-gray-600/60 transition flex flex-col items-center shadow-2xl hover:scale-105">
+                <div className="w-16 h-16 mb-4 flex items-center justify-center text-5xl">
+                    <span>🧙</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-200">CONCLAVE ARCANA</h3>
+                <p className="text-xs text-center text-gray-400 mt-2">Illusione, Controllo, Distorsione.</p>
             </div>
         </div>
     </div>
@@ -946,7 +1025,8 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             const getBaseDeck = (faction) => {   
                 if (faction === FACTIONS.HUMAN) return HUMAN_DECK_LIST;   
-                if (faction === FACTIONS.UNDEAD) return UNDEAD_DECK_LIST;   
+                if (faction === FACTIONS.UNDEAD) return UNDEAD_DECK_LIST;
+                if (faction === FACTIONS.ARCANUM) return ARCANUM_DECK_LIST;
                 return BEAST_DECK_LIST;   
             };   
    
@@ -1035,20 +1115,40 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             React.useEffect(() => { if (!isEndingTurnRef.current) checkScoring(); }, [p1Score, p2Score]);
    
-            const checkScoring = () => {   
-                setClaimedThresholds(prev => {   
-                    const next = { ...prev };   
-                    let p1Gained = 0, p2Gained = 0, changed = false;   
-                    THRESHOLDS.forEach(t => {   
-                        if (next[t.val] === null) {   
-                            if (p1Score >= t.val) { next[t.val] = 'p1'; p1Gained += t.pts; changed = true; addLog(`G1 conquista soglia ${t.val}! (+${t.pts} pt)`); }   
-                            else if (p2Score >= t.val) { next[t.val] = 'p2'; p2Gained += t.pts; changed = true; addLog(`G2 conquista soglia ${t.val}! (+${t.pts} pt)`); }   
-                        }   
-                    });   
-                    if (changed) { if (p1Gained > 0) setP1VP(v => v + p1Gained); if (p2Gained > 0) setP2VP(v => v + p2Gained); }   
-                    return next;   
-                });   
-            };   
+            const checkScoring = () => {
+                const p1HasDistortion = p1Field.some(c => c.effect === EFFECTS.DISTORTION);
+                const p2HasDistortion = p2Field.some(c => c.effect === EFFECTS.DISTORTION);
+
+                setClaimedThresholds(prev => {
+                    const next = { ...prev };
+                    let p1Gained = 0, p2Gained = 0, changed = false;
+
+                    THRESHOLDS.forEach(t => {
+                        const p1Threshold = p1HasDistortion ? Math.max(1, t.val - 2) : t.val;
+                        const p2Threshold = p2HasDistortion ? Math.max(1, t.val - 2) : t.val;
+
+                        if (next[t.val] === null) {
+                            if (p1Score >= p1Threshold) {
+                                next[t.val] = 'p1';
+                                p1Gained += t.pts;
+                                changed = true;
+                                addLog(`G1 conquista soglia ${t.label} (Distorta a ${p1Threshold})! (+${t.pts} pt)`);
+                            } else if (p2Score >= p2Threshold) {
+                                next[t.val] = 'p2';
+                                p2Gained += t.pts;
+                                changed = true;
+                                addLog(`G2 conquista soglia ${t.label} (Distorta a ${p2Threshold})! (+${t.pts} pt)`);
+                            }
+                        }
+                    });
+
+                    if (changed) {
+                        if (p1Gained > 0) setP1VP(v => v + p1Gained);
+                        if (p2Gained > 0) setP2VP(v => v + p2Gained);
+                    }
+                    return next;
+                });
+            };
    
             React.useEffect(() => {   
                 if (gameState === 'GAME_OVER') return;   
@@ -1233,6 +1333,22 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             const startTurn = (pid) => {
                 if (gameState === 'GAME_OVER') return;
+
+                // Clear stasis at the start of the turn
+                const myFieldSetter = pid === 1 ? setP1Field : setP2Field;
+                let stasisCleared = false;
+                myFieldSetter(prev => prev.map(c => {
+                    if (c.isStasis) {
+                        stasisCleared = true;
+                        const { isStasis, ...rest } = c;
+                        return rest;
+                    }
+                    return c;
+                }));
+                if (stasisCleared) {
+                    addLog(`Le creature si risvegliano dalla Stasi!`);
+                }
+
                 const roundNumber = Math.floor(turnCount / 2) + 1;
                 setTurnCount(c => c + 1);
                 populateEffectQueue(pid); 
@@ -1427,8 +1543,29 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 // Delay for effect resolution
                 setTimeout(() => {
                     resolveEffect(playedCard, finalTarget, 2);
-                    setIsProcessing(false);
-                    setTimeout(() => endTurn(2), 1500);
+
+                    const playerField = p1FieldRef.current;
+                    const mirageCreatures = playerField.filter(c =>
+                        [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(c.effect) || c.isMirage
+                    );
+
+                    if (playedCard.strength >= 3 && mirageCreatures.length > 0) {
+                        addLog(`La mossa del nemico minaccia i tuoi Miraggi!`);
+                        setChoiceState({
+                            title: "Scegli un tuo Miraggio da distruggere",
+                            options: mirageCreatures,
+                            callback: (mirageToDestroy) => {
+                                killCreature(mirageToDestroy, 1);
+                                addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                                setChoiceState(null);
+                                setIsProcessing(false);
+                                setTimeout(() => endTurn(2), 1000);
+                            }
+                        });
+                    } else {
+                        setIsProcessing(false);
+                        setTimeout(() => endTurn(2), 1500);
+                    }
                 }, 800);
             };   
 
@@ -1543,7 +1680,24 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 ].includes(effect);
             }
 
+            const handleMirageOnPlay = (playedCard) => {
+                const enemyMirageCreatures = p2FieldRef.current.filter(c =>
+                    [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(c.effect) || c.isMirage
+                );
+
+                if (playedCard.strength >= 1 && enemyMirageCreatures.length > 0) {
+                    addLog(`La tua mossa minaccia i Miraggi nemici!`);
+                    // AI simple logic: destroy the weakest mirage
+                    const mirageToDestroy = enemyMirageCreatures.sort((a, b) => getEffectiveStrength(a) - getEffectiveStrength(b))[0];
+                    killCreature(mirageToDestroy, 2);
+                    addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                }
+            };
+
             const handlePlayConfirm = () => {
+                if (selectedCard && selectedCard.strength >= 1) {
+                    handleMirageOnPlay(selectedCard);
+                }
                 if (!selectedCard) return;
                 const cost = Math.max(0, selectedCard.strength - costModifier.p1);
                 const pay = paymentCards.reduce((a, c) => a + c.strength, 0);
