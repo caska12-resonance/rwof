@@ -1559,7 +1559,8 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                                 killCreature(mirageToDestroy, 1);
                                 addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
                                 setChoiceState(null);
-                                endTurn(2);
+                                // Use a timeout to ensure state updates before ending the turn
+                                setTimeout(() => endTurn(2), 50);
                             }
                         });
                     } else {
