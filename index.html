@@ -1457,7 +1457,8 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 const possiblePlays = [];
                 for (const cardToPlay of currentHand) {
                     const isMirageCard = [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(cardToPlay.effect) || cardToPlay.isMirage;
-                    const cost = isMirageCard ? 1 : cardToPlay.strength;
+                    const baseCost = isMirageCard ? 1 : cardToPlay.strength;
+                    const cost = Math.max(0, baseCost - costModifier.p2);
                     const otherCards = currentHand.filter(c => c.uid !== cardToPlay.uid);
                     const totalPayValue = otherCards.reduce((acc, card) => acc + card.strength, 0);
 
@@ -1701,7 +1702,9 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 if (!selectedCard) return;
 
                 const isMirageCard = [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(selectedCard.effect) || selectedCard.isMirage;
-                const cost = isMirageCard ? 1 : Math.max(0, selectedCard.strength - costModifier.p1);
+                const baseCost = isMirageCard ? 1 : selectedCard.strength;
+                const cost = Math.max(0, baseCost - costModifier.p1);
+
                 const pay = paymentCards.reduce((a, c) => a + c.strength, 0);
                 if (pay < cost) { addLog(`Forza insufficiente! (${pay}/${cost})`); return; }
 
@@ -2402,7 +2405,12 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             if (gameState === 'MENU') return <StartScreen onStart={startGame} />;   
    
             const totalPay = paymentCards.reduce((a,c) => a + c.strength, 0);   
-            const needed = selectedCard ? Math.max(0, selectedCard.strength - costModifier.p1) : 0;   
+            let needed = 0;
+            if (selectedCard) {
+                const isMirageCard = [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(selectedCard.effect) || selectedCard.isMirage;
+                const baseCost = isMirageCard ? 1 : selectedCard.strength;
+                needed = Math.max(0, baseCost - costModifier.p1);
+            }
             const canPlay = selectedCard && totalPay >= needed;   
    
             const isDeckTargeting = isTargeting && pendingEffect && [EFFECTS.SCRY].includes(pendingEffect.effect);   
