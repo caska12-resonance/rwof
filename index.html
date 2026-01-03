@@ -1101,6 +1101,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setP1VP(0);
                 
                 if (window.p2FieldOverride) {
+                    h2 = h2.filter(c => !window.p2FieldOverride.some(fc => fc.uid === c.uid));
                     setP2Field(window.p2FieldOverride);
                     window.p2FieldOverride = null;
                 } else {
