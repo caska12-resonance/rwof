@@ -1040,6 +1040,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 offset: { x: 0, y: 0 },
             });
             const [multiTargetState, setMultiTargetState] = React.useState(null);
+            const [postChoiceAction, setPostChoiceAction] = React.useState(null);
    
             const p2HandRef = React.useRef([]);   
             const p1FieldRef = React.useRef([]);   
@@ -1478,7 +1479,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             React.useEffect(() => {   
                 if (gameState === 'AI_TURN') { const timer = setTimeout(executeAITurn, 1500); return () => clearTimeout(timer); }   
-            }, [gameState]);   
+            }, [gameState]);
+
+            React.useEffect(() => {
+                if (postChoiceAction === 'END_AI_TURN') {
+                    endTurn(2);
+                    setPostChoiceAction(null);
+                }
+            }, [postChoiceAction]);
    
             const executeAITurn = () => {
                 const currentHand = p2HandRef.current;
@@ -1595,8 +1603,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                                 killCreature(mirageToDestroy, 1);
                                 addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
                                 setChoiceState(null);
-                                // Use a timeout to ensure state updates before ending the turn
-                                setTimeout(() => endTurn(2), 50);
+                                setPostChoiceAction('END_AI_TURN');
                             }
                         });
                     } else {
