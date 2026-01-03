@@ -6,7 +6,8 @@
     <title>Resonance: War of Faction</title>  
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>  
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>  
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>  
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-transition-group/4.4.2/react-transition-group.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>  
     <style>  
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500;700&display=swap');  
@@ -154,34 +155,25 @@
         .text-rarity-epic { color: #a855f7; }  
         .text-rarity-unique { color: #eab308; }  
   
-        .selected-to-play {  
-            box-shadow: 0 0 0 4px #3b82f6 !important;  
-            transform: translateY(-20px) scale(1.1) !important;  
-            z-index: 45 !important;  
-        }  
-        .selected-to-discard {  
-            box-shadow: 0 0 0 4px #ef4444 !important;  
-            transform: scale(0.9) !important;  
-            opacity: 0.7;  
-            filter: grayscale(0.5);  
-        }  
+        .selected-to-play {
+            box-shadow: 0 0 15px 5px rgba(59, 130, 246, 0.7), 0 0 5px 2px rgba(59, 130, 246, 0.5) !important;
+            transform: translateY(-20px) scale(1.1) !important;
+            z-index: 45 !important;
+        }
+        .selected-to-discard {
+            box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.6), 0 0 5px 2px rgba(239, 68, 68, 0.4) !important;
+            transform: scale(0.9) !important;
+            opacity: 0.7;
+            filter: grayscale(0.5);
+        }
         .valid-target {
-            box-shadow: 0 0 12px 3px #facc15, inset 0 0 5px #facc15;
-            animation: pulse-yellow 1.2s infinite;
+            box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.7);
+            animation: pulse-red 1.2s infinite;
             cursor: crosshair;
         }
-        .playable-card {
-            box-shadow: 0 0 12px 3px #4ade80, inset 0 0 5px #4ade80;
-            animation: pulse-green 1.5s infinite;
+        @keyframes pulse-red {
+            50% { box-shadow: 0 0 18px 6px rgba(185, 28, 28, 0.7); }
         }
-        .combat-attacker {
-             box-shadow: 0 0 15px 5px #ef4444, inset 0 0 8px #ef4444;
-            animation: pulse-combat 1s infinite;
-        }
-
-        @keyframes pulse-yellow { 50% { box-shadow: 0 0 15px 5px #eab308, inset 0 0 7px #eab308; } }
-        @keyframes pulse-green { 50% { box-shadow: 0 0 15px 5px #22c55e, inset 0 0 7px #22c55e; } }
-        @keyframes pulse-combat { 50% { box-shadow: 0 0 18px 7px #b91c1c, inset 0 0 10px #b91c1c; } }
 
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -273,13 +265,6 @@
         }
         .zoomed-card-container:active {
             cursor: grabbing;
-        }
-
-        /* Card Animation Styles */
-        .animating-card-container {
-            position: absolute;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-            z-index: 200; /* High z-index to fly over other elements */
         }
 
         /* Responsive Styles for Mobile */
@@ -711,12 +696,10 @@
         const generateId = () => `uid-${Date.now()}-${globalIdCounter++}-${Math.floor(Math.random() * 1000)}`;
 
         const createFullDeck = (baseList, faction) => {
-            let animationIdCounter = 0;
             let deck = baseList.map(card => ({
                 ...card,
                 faction,
                 uid: generateId(),
-                animationId: `${faction}-${animationIdCounter++}`, // Unique and persistent ID for animation
                 currentStrength: card.strength,
                 tempStrength: 0
             }));
@@ -1031,8 +1014,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 position: { x: 0, y: 0 },
                 offset: { x: 0, y: 0 },
             });
-            const [cardPositions, setCardPositions] = React.useState({});
-            const [animations, setAnimations] = React.useState([]);
    
             const p2HandRef = React.useRef([]);   
             const p1FieldRef = React.useRef([]);   
@@ -1720,124 +1701,71 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             };
 
             const handlePlayConfirm = () => {
+                if (selectedCard && selectedCard.strength >= 3) {
+                    handleMirageOnPlay(selectedCard);
+                }
                 if (!selectedCard) return;
 
                 const isMirageCard = [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(selectedCard.effect) || selectedCard.isMirage;
                 const baseCost = isMirageCard ? 1 : selectedCard.strength;
                 const cost = Math.max(0, baseCost - costModifier.p1);
+
                 const pay = paymentCards.reduce((a, c) => a + c.strength, 0);
+                if (pay < cost) { addLog(`Forza insufficiente! (${pay}/${cost})`); return; }
 
-                if (pay < cost) {
-                    addLog(`Forza insufficiente! (${pay}/${cost})`);
-                    return;
-                }
-
-                // --- Animation Start ---
-                const startRect = cardPositions[selectedCard.animationId];
-                const playerPlayZone = document.getElementById('player-play-zone')?.getBoundingClientRect();
-
-                // Fallback if zones aren't found
-                const endRect = playerPlayZone
-                    ? { top: playerPlayZone.top + playerPlayZone.height / 2 - 112, left: playerPlayZone.left + playerPlayZone.width / 2 - 80 }
-                    : { top: window.innerHeight / 2, left: window.innerWidth / 2 };
-
-                if (startRect) {
-                    const animId = generateId();
-                    const animation = {
-                        id: animId,
-                        card: selectedCard,
-                        start: startRect,
-                        end: endRect
-                    };
-                    setAnimations(prev => [...prev, animation]);
-
-                    setTimeout(() => {
-                        setAnimations(prev => prev.filter(a => a.id !== animId));
-                    }, 500); // Corresponds to CSS transition duration
-                }
-                // --- Animation End ---
-
-                // Hide the card from hand immediately for the animation
-                const cardToPlay = { ...selectedCard }; // Important to copy
-                const payments = [...paymentCards];
-
-                const usedIds = [cardToPlay.uid, ...payments.map(c => c.uid)];
+                const usedIds = [selectedCard.uid, ...paymentCards.map(c => c.uid)];
                 setP1Hand(prev => prev.filter(c => !usedIds.includes(c.uid)));
-                setSelectedCard(null);
-                setPaymentCards([]);
+                setP1Grave(prev => [...prev, ...paymentCards]);
 
-                // Delay the actual game logic until after the animation starts
-                setTimeout(() => {
-                    if (cardToPlay.strength >= 3) {
-                        handleMirageOnPlay(cardToPlay);
-                    }
+                const played = { ...selectedCard, tempStrength: 0 };
 
-                    setP1Grave(prev => [...prev, ...payments]);
+                const alfa = p1Field.find(c => c.effect === EFFECTS.FACTION_WIDE_BUFF_AURA);
+                if (alfa && played.faction === FACTIONS.BEAST && played.uid !== alfa.uid) {
+                    played.currentStrength += alfa.val;
+                    addLog(`${played.name} entra con +${alfa.val}F permanente grazie a ${alfa.name}!`);
+                }
 
-                    const played = { ...cardToPlay, tempStrength: 0 };
+                if (played.type === CARD_TYPES.CREATURE) {
+                    setP1Field(prev => [...prev, played]);
+                }
 
-                    const alfa = p1FieldRef.current.find(c => c.effect === EFFECTS.FACTION_WIDE_BUFF_AURA);
-                    if (alfa && played.faction === FACTIONS.BEAST && played.uid !== alfa.uid) {
-                        played.currentStrength += alfa.val;
-                        addLog(`${played.name} entra con +${alfa.val}F permanente grazie a ${alfa.name}!`);
-                    }
+                if (needsTarget(played) || [EFFECTS.SACRIFICE_ALLY_BUFF, EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW].includes(played.effect)) {
+                    const targetsAlly = effectTargetsAlly(played.effect);
+                    let validTargetsExist = true;
 
-                    if (played.type === CARD_TYPES.CREATURE) {
-                        setP1Field(prev => [...prev, played]);
-                    }
-
-                    if (needsTarget(played) || [EFFECTS.SACRIFICE_ALLY_BUFF, EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW].includes(played.effect)) {
-                         const currentP1Field = [...p1FieldRef.current, played];
-                         const targetsAlly = effectTargetsAlly(played.effect);
-                        let validTargetsExist = true;
-
-                        if (targetsAlly) {
-                            if ([EFFECTS.SACRIFICE_ALLY_BUFF, EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW].includes(played.effect)) {
-                                if (currentP1Field.filter(c => c.uid !== played.uid).length === 0) validTargetsExist = false;
-                                if (played.effect === EFFECTS.SACRIFICE_WEAK_ALLY_DRAW && !currentP1Field.some(c => c.uid !== played.uid && getEffectiveStrength(c) <= played.val)) {
-                                    validTargetsExist = false;
-                                }
-                            } else if (played.type !== CARD_TYPES.CREATURE && currentP1Field.length === 0) {
+                    if (targetsAlly) {
+                        if ([EFFECTS.SACRIFICE_ALLY_BUFF, EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW].includes(played.effect)) {
+                            if (p1Field.filter(c => c.uid !== played.uid).length === 0) validTargetsExist = false;
+                             // For weak sacrifice, check if there's at least one valid target
+                            if (played.effect === EFFECTS.SACRIFICE_WEAK_ALLY_DRAW && !p1Field.some(c => c.uid !== played.uid && getEffectiveStrength(c) <= played.val)) {
                                 validTargetsExist = false;
                             }
-                        } else {
-                            if (p2FieldRef.current.length === 0) validTargetsExist = false;
                         }
-
-                        if (validTargetsExist) {
-                            setIsTargeting(true); setPendingEffect(played); addLog("Seleziona un bersaglio...");
-                        } else {
-                            addLog("Nessun bersaglio valido per l'abilità."); resolveEffect(played, null, 1);
-                            setIsProcessing(true); setTimeout(() => endTurn(1), 1000);
+                        else if (played.type !== CARD_TYPES.CREATURE && p1Field.length === 0) {
+                            validTargetsExist = false;
                         }
-                    } else if (played.effect === EFFECTS.DISCARD_THEN_DRAW) {
-                        setIsDiscarding(true); setPendingDiscardEffect(played); addLog("Seleziona una carta da scartare...");
                     } else {
-                        resolveEffect(played, null, 1);
-                        setIsProcessing(true);
-                        if (!effectOpensModal(played.effect)) {
-                            setTimeout(() => endTurn(1), 1000);
-                        }
+                        if (p2Field.length === 0) validTargetsExist = false;
                     }
-                }, 100); // Small delay to let React render the animation element
+
+                    if (validTargetsExist) {
+                        setIsTargeting(true); setPendingEffect(played); setSelectedCard(null); setPaymentCards([]); addLog("Seleziona un bersaglio...");
+                    } else {
+                        addLog("Nessun bersaglio valido per l'abilità."); resolveEffect(played, null, 1);
+                        setSelectedCard(null); setPaymentCards([]); setIsProcessing(true); setTimeout(() => endTurn(1), 1000);
+                    }
+                } else if (played.effect === EFFECTS.DISCARD_THEN_DRAW) {
+                    setIsDiscarding(true); setPendingDiscardEffect(played); setSelectedCard(null); setPaymentCards([]); addLog("Seleziona una carta da scartare...");
+                } else {
+                    resolveEffect(played, null, 1);
+                    setSelectedCard(null);
+                    setPaymentCards([]);
+                    setIsProcessing(true);
+                    if (!effectOpensModal(played.effect)) {
+                        setTimeout(() => endTurn(1), 1000);
+                    }
+                }
             };
-
-    const AnimatedCard = ({ card, ...props }) => {
-        const cardRef = React.useRef(null);
-
-        React.useLayoutEffect(() => {
-            if (cardRef.current) {
-                const rect = cardRef.current.getBoundingClientRect();
-                setCardPositions(prev => ({ ...prev, [card.animationId]: { top: rect.top, left: rect.left, width: rect.width, height: rect.height } }));
-            }
-        }, [card]);
-
-        return (
-            <div ref={cardRef} data-card-id={card.animationId}>
-                <Card card={card} {...props} />
-            </div>
-        );
-    };
 
             const handleTargetClick = (target) => {
                 if (!isTargeting || !pendingEffect) return;
@@ -2504,26 +2432,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             return (
         <div className="h-screen w-full flex flex-col bg-gray-900 overflow-hidden text-sm relative">
-             {animations.map(({ id, card, start, end }) => {
-                const dx = end.left - start.left;
-                const dy = end.top - start.top;
-                return (
-                    <div
-                        key={id}
-                        className="animating-card-container"
-                        style={{
-                            top: `${start.top}px`,
-                            left: `${start.left}px`,
-                            width: `${start.width}px`,
-                            height: `${start.height}px`,
-                            transform: `translate(${dx}px, ${dy}px) scale(1.1)`,
-                            opacity: 1
-                        }}
-                    >
-                        <Card card={card} />
-                    </div>
-                );
-            })}
             {zoomedCard && (
                 <div className="card-zoom-overlay" onClick={() => setZoomedCard(null)}>
                     <div
@@ -2607,8 +2515,8 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     </div>
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
-                    <div id="player-play-zone" className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
-                        {p1Field.map(c => <AnimatedCard key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} isValidTarget={isAllyTargeting} />)}
+                    <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
+                        {p1Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} isValidTarget={isAllyTargeting} />)}
                     </div>
                     <div className="w-24 flex flex-col justify-center items-center gap-4 p-2 bg-black/20">
                         <Pile type="DECK" count={p1Deck.length} onClick={isDeckTargeting ? () => handleTargetClick(p1Deck[0]) : ()=>{}} />
@@ -2619,9 +2527,9 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
 
             {/* HAND AREA */}
             <div className="bg-black/70 backdrop-blur-sm border-t-2 border-yellow-800 flex flex-col shadow-2xl z-30 hand-area shrink-0">
-                <div className="flex-1 flex items-center justify-center gap-2 px-4 overflow-x-auto overflow-y-hidden py-2">
+                <div id="p1Hand" className="flex-1 flex items-center justify-center gap-2 px-4 overflow-x-auto overflow-y-hidden py-2">
                     {p1Hand.map(c => (
-                        <AnimatedCard
+                        <Card
                             key={c.uid} card={c} 
                             isSelected={selectedCard && selectedCard.uid === c.uid}
                             isPaymentSelected={paymentCards.some(x => x.uid === c.uid)}
