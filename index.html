@@ -2671,17 +2671,20 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.REORDER_ENEMY_DECK_3:
                         const enemyDeckSetter = isP1 ? setP2Deck : setP1Deck;
-                        enemyDeckSetter(prev => {
-                            const top3 = prev.slice(0, 3);
-                            if (isP1) {
+                        if (isP1) {
+                            enemyDeckSetter(prev => {
+                                const top3 = prev.slice(0, 3);
                                 setReorderDeckState(top3);
-                            } else {
-                                // AI logic: just put the strongest on top
+                                return prev;
+                            });
+                        } else {
+                            // AI logic: just put the strongest on top
+                             enemyDeckSetter(prev => {
+                                const top3 = prev.slice(0, 3);
                                 const ordered = top3.sort((a,b) => b.strength - a.strength);
-                                enemyDeckSetter(d => [...ordered, ...d.slice(3)]);
-                            }
-                            return prev;
-                        });
+                                return [...ordered, ...prev.slice(3)];
+                            });
+                        }
                         msg += `guarda le prime 3 carte del mazzo nemico.`;
                         break;
                     default:
