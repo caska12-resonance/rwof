@@ -2845,7 +2845,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const p2FactionBG = enemyFaction === FACTIONS.HUMAN ? 'human-bg' : enemyFaction === FACTIONS.UNDEAD ? 'undead-bg' : 'beast-bg';   
    
             return (
-        <div className="h-screen w-full flex flex-col md:flex-row bg-gray-900 overflow-hidden text-sm relative">
+        <div className="h-screen w-full flex flex-col bg-gray-900 overflow-hidden text-sm relative">
             {reorderDeckState && <ReorderDeckModal cards={reorderDeckState} onConfirm={(orderedCards) => {
                 setP2Deck(prev => [...orderedCards, ...prev.slice(orderedCards.length)]);
                 setReorderDeckState(null);
@@ -2871,49 +2871,18 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             <GraveyardModal cards={graveyardViewer} onClose={() => setGraveyardViewer(null)} />
             <ChoiceModal choiceState={choiceState} onChoice={handleChoice} />
             
-            {/* ENEMY AREA */}
-            <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 md:border-b-0 md:border-r-4 border-yellow-700/50 min-h-0`}>
-                {/* Player Info Bar */}
-                <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
-                    <span className="font-bold font-fantasy text-base text-gray-400">Nemico: {p2Hand.length} carte</span>
-                    <div className="flex gap-4 items-center">
-                        <VictoryThresholds claimedThresholds={claimedThresholds} />
-                        <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} />
-                    </div>
+            {/* Desktop-Only Mid Bar */}
+            <div className="hidden md:flex h-10 bg-black items-center justify-between px-4 z-20 border-b-2 border-yellow-800 shadow-xl shrink-0">
+                <div className="w-1/3">
+                    <button onClick={() => setIsLogVisible(true)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">Registro</button>
                 </div>
-
-                {/* Main Content */}
-                <div className="flex-1 flex flex-col md:flex-row px-2 overflow-hidden">
-                    {/* Field */}
-                    <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
-                        {p2Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} onPressStart={handleCardPressStart} onPressEnd={handleCardPressEnd} isValidTarget={(isTargeting && isEnemyTargeting) || multiTargetState} />)}
-                    </div>
-                    {/* Piles (Desktop) */}
-                    <div className="hidden md:flex w-24 flex-col justify-center items-center gap-4 p-2 bg-black/20">
-                        <Pile type="DECK" count={p2Deck.length} />
-                        <Pile type="GRAVE" count={p2Grave.length} topCard={p2Grave[0]} onClick={() => setGraveyardViewer(p2Grave)} />
-                    </div>
-                </div>
-            </div>
-
-            {/* MID BAR & MOBILE PILES */}
-            <div className="h-14 md:h-10 bg-black flex items-center justify-between px-4 z-20 border-y-2 border-yellow-800 shadow-xl shrink-0 md:order-first md:w-full">
-                {/* Mobile Piles */}
-                <div className="flex md:hidden gap-3 items-center">
-                    <Pile type="DECK" count={p1Deck.length} />
-                    <Pile type="GRAVE" count={p1Grave.length} onClick={() => setGraveyardViewer(p1Grave)} />
-                    <Pile type="LOG" onClick={() => setIsLogVisible(true)} />
-                </div>
-
-                {/* Log & Actions */}
-                <div className="flex-1 flex items-center justify-center md:w-2/3 h-full overflow-y-auto scrollbar-hide py-1 px-4">
+                <div className="w-1/3 flex-1 flex items-center justify-center h-full overflow-y-auto scrollbar-hide py-1 px-4">
                      {logs.slice(0, 1).map((log, i) => (
                         <div key={i} className="text-sm text-yellow-100 opacity-90 font-mono truncate">{log}</div>
                     ))}
                 </div>
-
-                 <div className="flex gap-2 items-center">
-                     {gameState === 'PLAYER_TURN' && !isProcessing ? (
+                <div className="w-1/3 flex gap-2 items-center justify-end">
+                    {gameState === 'PLAYER_TURN' && !isProcessing ? (
                         <>
                             {selectedCard && !isTargeting && (
                                 <div className="flex items-center gap-2">
@@ -2925,46 +2894,78 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                                 </div>
                             )}
                             {!selectedCard && !isTargeting && (
-                                <>
-                                    <button onClick={() => setIsLogVisible(true)} className="hidden md:block px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">Registro</button>
-                                    <button onClick={() => endTurn(1)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">PASSA</button>
-                                </>
+                                <button onClick={() => endTurn(1)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">PASSA</button>
                             )}
                             {isTargeting && <div className="text-yellow-400 font-bold animate-pulse text-sm px-2 border border-yellow-500 rounded bg-yellow-900/50">BERSAGLIO!</div>}
                             {multiTargetState && <div className="text-yellow-400 font-bold animate-pulse text-sm px-2 border border-yellow-500 rounded bg-yellow-900/50">{multiTargetState.message}</div>}
                         </>
                     ) : (isProcessing && <div className="text-gray-400 italic text-sm animate-pulse">In attesa...</div>)}
                 </div>
-
-                 {/* Mobile Enemy Piles */}
-                 <div className="flex md:hidden gap-3 items-center">
-                    <Pile type="DECK" count={p2Deck.length} />
-                    <Pile type="GRAVE" count={p2Grave.length} onClick={() => setGraveyardViewer(p2Grave)} />
-                </div>
             </div>
 
-            {/* PLAYER AREA */}
-            <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 md:border-t-0 md:border-l-4 border-yellow-700/50 min-h-0`}>
-                {/* Player Info Bar */}
-                <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
-                    <span className={`font-bold font-fantasy text-base ${playerFaction === FACTIONS.HUMAN ? 'text-blue-400' : playerFaction === FACTIONS.UNDEAD ? 'text-purple-400' : 'text-green-400'}`}>
-                        {playerFaction.toUpperCase()}
-                    </span>
-                    <div className="flex gap-4 items-center">
-                        <VictoryThresholds claimedThresholds={claimedThresholds} />
-                        <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} />
+            {/* Main Boards Area */}
+            <div className="flex-1 flex flex-col md:flex-row min-h-0">
+                {/* ENEMY AREA */}
+                <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 md:border-b-0 md:border-r-2 border-yellow-700/50 min-h-0`}>
+                    <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
+                        <span className="font-bold font-fantasy text-base text-gray-400">Nemico: {p2Hand.length} carte</span>
+                        <div className="flex gap-4 items-center">
+                            <VictoryThresholds claimedThresholds={claimedThresholds} />
+                            <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} />
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col md:flex-row px-2 overflow-hidden">
+                        <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
+                            {p2Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} onPressStart={handleCardPressStart} onPressEnd={handleCardPressEnd} isValidTarget={(isTargeting && isEnemyTargeting) || multiTargetState} />)}
+                        </div>
+                        <div className="hidden md:flex w-24 flex-col justify-center items-center gap-4 p-2 bg-black/20">
+                            <Pile type="DECK" count={p2Deck.length} />
+                            <Pile type="GRAVE" count={p2Grave.length} topCard={p2Grave[0]} onClick={() => setGraveyardViewer(p2Grave)} />
+                        </div>
                     </div>
                 </div>
-                {/* Main Content */}
-                <div className="flex-1 flex flex-col md:flex-row px-2 overflow-hidden">
-                    {/* Field */}
-                    <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
-                        {p1Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} onPressStart={handleCardPressStart} onPressEnd={handleCardPressEnd} isValidTarget={isAllyTargeting || multiTargetState} />)}
+
+                {/* Mobile-Only Mid Bar */}
+                <div className="h-14 bg-black flex items-center justify-between px-4 z-20 border-y-2 border-yellow-800 shadow-xl shrink-0 md:hidden">
+                    <div className="flex gap-3 items-center">
+                        <Pile type="DECK" count={p1Deck.length} />
+                        <Pile type="GRAVE" count={p1Grave.length} onClick={() => setGraveyardViewer(p1Grave)} />
+                        <Pile type="LOG" onClick={() => setIsLogVisible(true)} />
                     </div>
-                    {/* Piles (Desktop) */}
-                    <div className="hidden md:flex w-24 flex-col justify-center items-center gap-4 p-2 bg-black/20">
-                        <Pile type="DECK" count={p1Deck.length} onClick={isDeckTargeting ? () => handleTargetClick(p1Deck[0]) : () => {}} />
-                        <Pile type="GRAVE" count={p1Grave.length} topCard={p1Grave[0]} onClick={() => setGraveyardViewer(p1Grave)} />
+                    <div className="flex items-center justify-center h-full overflow-y-auto scrollbar-hide py-1 px-2">
+                        {isProcessing ? <div className="text-gray-400 italic text-sm animate-pulse">In attesa...</div>
+                        : !selectedCard ? <button onClick={() => endTurn(1)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">PASSA</button>
+                        : <div className="flex items-center gap-2">
+                            <span className={`text-sm font-bold ${canPlay ? 'text-green-400' : 'text-red-400'}`}>{totalPay}/{needed}</span>
+                            <button disabled={!canPlay} onClick={handlePlayConfirm} className={`px-3 py-1 rounded text-sm font-bold shadow ${canPlay ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-gray-700 text-gray-500'}`}>GIOCA</button>
+                          </div>
+                        }
+                    </div>
+                    <div className="flex gap-3 items-center">
+                        <Pile type="DECK" count={p2Deck.length} />
+                        <Pile type="GRAVE" count={p2Grave.length} onClick={() => setGraveyardViewer(p2Grave)} />
+                    </div>
+                </div>
+
+                {/* PLAYER AREA */}
+                <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 md:border-t-0 md:border-l-2 border-yellow-700/50 min-h-0`}>
+                    <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
+                        <span className={`font-bold font-fantasy text-base ${playerFaction === FACTIONS.HUMAN ? 'text-blue-400' : playerFaction === FACTIONS.UNDEAD ? 'text-purple-400' : 'text-green-400'}`}>
+                            {playerFaction.toUpperCase()}
+                        </span>
+                        <div className="flex gap-4 items-center">
+                            <VictoryThresholds claimedThresholds={claimedThresholds} />
+                            <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} />
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col md:flex-row px-2 overflow-hidden">
+                        <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
+                            {p1Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} onPressStart={handleCardPressStart} onPressEnd={handleCardPressEnd} isValidTarget={isAllyTargeting || multiTargetState} />)}
+                        </div>
+                        <div className="hidden md:flex w-24 flex-col justify-center items-center gap-4 p-2 bg-black/20">
+                            <Pile type="DECK" count={p1Deck.length} onClick={isDeckTargeting ? () => handleTargetClick(p1Deck[0]) : () => {}} />
+                            <Pile type="GRAVE" count={p1Grave.length} topCard={p1Grave[0]} onClick={() => setGraveyardViewer(p1Grave)} />
+                        </div>
                     </div>
                 </div>
             </div>
