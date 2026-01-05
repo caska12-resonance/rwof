@@ -497,7 +497,7 @@
             { name: "Drago di Vetro", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
             { name: "Titano di Quarzo", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE_HEXPROOF_SPELLS', val: 0, desc: "Miraggio. Non può essere distrutto da Incantesimi." },
             { name: "Cronomas, il Reggente", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'STASIS_STRONGEST', val: 0, desc: "Quando entra in campo, metti in Stasi la creatura nemica con Forza più alta." },
-            { name: "Paradosso Vivente", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SWAP_TOTAL_STRENGTH', val: 0, desc: "Quando entra in campo, fino alla fine del turno scambia la tua Forza totale con quella dell’avversario." },
+            { name: "Paradosso Vivente", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SWAP_TOTAL_STRENGTH', val: 0, desc: "Quando entra in campo, applica la differenza di Forza totale tra i giocatori come bonus/malus temporaneo a una creatura per lato." },
             { name: "Custode del Velo", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'PROTECT_MIRAGE_ONCE', val: 0, desc: "Una volta per partita, quando un tuo Miraggio verrebbe distrutto da un effetto bersagliato, invece non viene distrutto." },
             { name: "Eclissi Temporale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'STASIS_AND_DRAW', val: 0, desc: "Metti in Stasi una creatura nemica. Pesca una carta." },
             { name: "Portale dell’Oblio", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'EXILE_CREATURE', val: 0, desc: "Rimuovi dal gioco una creatura nemica." },
@@ -521,7 +521,7 @@
             { name: "Soldato di Vetro", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
             { name: "Fantasma Minore", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'MIRAGE', val: 0, desc: "Miraggio." },
             { name: "Dardo di Ghiaccio", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'STASIS', val: 0, desc: "Metti in Stasi una creatura nemica." },
-            { name: "Svanire nel Nulla", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'SILENCE_TARGET', val: 0, desc: "Scegli una creatura nemica. Perde tutte le sue abilità fino alla fine del turno." },
+            { name: "Svanire nel Nulla", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'SILENCE_TARGET', val: 0, desc: "Rimuove permanentemente le abilità continue da una creatura nemica." },
             { name: "Soffio Gelido", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'DEBUFF_ENEMY', val: 1, desc: "Una creatura nemica perde 1 Forza permanente." },
             { name: "Tocco del Vuoto", strength: 1, type: CARD_TYPES.SPELL, rarity: 'common', effect: 'DESTROY_EXACT', val: 1, desc: "Distruggi una creatura con Forza 1." },
             { name: "Studioso delle Rune", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'common', effect: 'SCRY_1_NO_CHOICE', val: 0, desc: "Quando entra in campo, guarda la prima carta del tuo mazzo." },
@@ -708,6 +708,7 @@
    
         const getEffectiveStrength = (card) => {   
             if (card.isStasis) return 0;
+            if (card.isFrozen) return card.currentStrength;
             return Math.max(0, (card.currentStrength || 0) + (card.tempStrength || 0));   
         }   
    
@@ -967,6 +968,32 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 </div>
             );
         };
+
+        const ReorderDeckModal = ({ cards, onConfirm }) => {
+            const [orderedCards, setOrderedCards] = React.useState(cards);
+
+            const handleCardClick = (card) => {
+                const newOrder = orderedCards.filter(c => c.uid !== card.uid);
+                setOrderedCards([card, ...newOrder]);
+            };
+
+            return (
+                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-[800] p-4">
+                    <h2 className="text-2xl font-fantasy text-yellow-400 mb-4 text-center">Riordina il mazzo nemico</h2>
+                    <p className="text-gray-300 mb-4">Clicca sulle carte per metterle in cima al mazzo.</p>
+                    <div className="flex flex-wrap gap-4 mb-4 justify-center">
+                        {orderedCards.map(card => (
+                            <div key={card.uid} onClick={() => handleCardClick(card)} className="cursor-pointer">
+                                <Card card={card} />
+                            </div>
+                        ))}
+                    </div>
+                    <button onClick={() => onConfirm(orderedCards)} className="px-6 py-2 rounded bg-blue-700 hover:bg-blue-600 text-white font-bold text-lg">
+                        CONFERMA
+                    </button>
+                </div>
+            );
+        };
    
         const App = () => {   
             const [gameState, setGameState] = React.useState('MENU');    
@@ -1001,14 +1028,19 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [costModifier, setCostModifier] = React.useState({ p1: 0, p2: 0 });   
             const [protection, setProtection] = React.useState({ p1_ally: null, p1_all: false, p2_ally: null, p2_all: false });   
             const [graveyardViewer, setGraveyardViewer] = React.useState(null);
+            const [lastSpellTurn, setLastSpellTurn] = React.useState({ p1: -1, p2: -1 });
+            const [protectMirage, setProtectMirage] = React.useState({ p1: true, p2: true });
             const [effectQueue, setEffectQueue] = React.useState([]);
             const [isLogVisible, setIsLogVisible] = React.useState(false);
             const [zoomedCard, setZoomedCard] = React.useState(null);
+            const [reorderDeckState, setReorderDeckState] = React.useState(null);
             const [dragState, setDragState] = React.useState({
                 isDragging: false,
                 position: { x: 0, y: 0 },
                 offset: { x: 0, y: 0 },
             });
+            const [multiTargetState, setMultiTargetState] = React.useState(null);
+            const [postChoiceAction, setPostChoiceAction] = React.useState(null);
    
             const p2HandRef = React.useRef([]);   
             const p1FieldRef = React.useRef([]);   
@@ -1069,6 +1101,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setP1VP(0);
                 
                 if (window.p2FieldOverride) {
+                    h2 = h2.filter(c => !window.p2FieldOverride.some(fc => fc.uid === c.uid));
                     setP2Field(window.p2FieldOverride);
                     window.p2FieldOverride = null;
                 } else {
@@ -1079,6 +1112,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setP2VP(0);
                 setClaimedThresholds({ 10: null, 15: null, 20: null, 30: null });
                 setLogs([]); 
+                setProtectMirage({ p1: true, p2: true });
                 
                 // Coin toss to decide who goes first
                 const firstPlayer = window.startingPlayerOverride || Math.floor(Math.random() * 2) + 1;
@@ -1422,7 +1456,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 isEndingTurnRef.current = true;
 
                 const fieldSetter = finishedPid === 1 ? setP1Field : setP2Field;
-                fieldSetter(prev => prev.map(c => ({ ...c, tempStrength: 0, isIndestructible: false })));
+                fieldSetter(prev => prev.map(c => ({ ...c, tempStrength: 0, isIndestructible: false, isFrozen: false })));
                 
                 // Reset temporary states
                 setSelectedCard(null);
@@ -1446,7 +1480,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             React.useEffect(() => {   
                 if (gameState === 'AI_TURN') { const timer = setTimeout(executeAITurn, 1500); return () => clearTimeout(timer); }   
-            }, [gameState]);   
+            }, [gameState]);
+
+            React.useEffect(() => {
+                if (postChoiceAction === 'END_AI_TURN') {
+                    endTurn(2);
+                    setPostChoiceAction(null);
+                }
+            }, [postChoiceAction]);
    
             const executeAITurn = () => {
                 const currentHand = p2HandRef.current;
@@ -1462,6 +1503,9 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     const otherCards = currentHand.filter(c => c.uid !== cardToPlay.uid);
                     const totalPayValue = otherCards.reduce((acc, card) => acc + card.strength, 0);
 
+                    if (effectNeedsTwoTargets(cardToPlay.effect)) {
+                        continue; // AI doesn't know how to use this yet.
+                    }
                     if (totalPayValue >= cost) {
                         let payment = [];
                         let currentPaymentValue = 0;
@@ -1560,8 +1604,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                                 killCreature(mirageToDestroy, 1);
                                 addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
                                 setChoiceState(null);
-                                // Use a timeout to ensure state updates before ending the turn
-                                setTimeout(() => endTurn(2), 50);
+                                setPostChoiceAction('END_AI_TURN');
                             }
                         });
                     } else {
@@ -1668,16 +1711,29 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     EFFECTS.TRANSFER_STRENGTH, EFFECTS.PROTECT_ALLY_FROM_DESTRUCTION,
                     EFFECTS.ALLY_PERM_BUFF_2_AND_HEXPROOF_TURN, EFFECTS.FORMATION_3_ALLY_TEMP_BUFF_5,
                     EFFECTS.FORMATION_4_ALLY_TEMP_BUFF_5, EFFECTS.SACRIFICE_ALLY_BUFF, 
-                    EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW
+                    EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW,
+                    // Arcanum
+                    EFFECTS.FREEZE_STRENGTH, EFFECTS.SACRIFICE_MIRAGE_DRAW_3, EFFECTS.SWAP_STRENGTH_ALLY
                 ].includes(effect);
             };
+
+            const effectTargetsAny = (effect) => {
+                return [
+                    EFFECTS.CREATE_MIRAGE_COPY,
+                    EFFECTS.TURN_TO_FRAGILE_MIRAGE,
+                    EFFECTS.CLONE_WEAK_CREATURE,
+                    EFFECTS.BOUNCE_ALLY_DRAW,
+                ].includes(effect);
+            }
 
             const effectTargetsEnemy = (effect) => {
                  return [
                     EFFECTS.DESTROY_WEAK, EFFECTS.DESTROY_EXACT, EFFECTS.DEBUFF_ENEMY, 
                     EFFECTS.BOUNCE_ENEMY, EFFECTS.TEMP_DEBUFF_ENEMY, EFFECTS.DESTROY_WOUNDED, 
                     EFFECTS.AURA_DEBUFF_ENEMY, EFFECTS.STEAL_STRENGTH, EFFECTS.DEBUFF_WEAK_ENEMY,
-                    EFFECTS.FORMATION_DESTROY_WEAK_3, EFFECTS.DESTROY_WEAK_OR_WEAKER_2
+                    EFFECTS.FORMATION_DESTROY_WEAK_3, EFFECTS.DESTROY_WEAK_OR_WEAKER_2,
+                    // Arcanum
+                    EFFECTS.STASIS, EFFECTS.SILENCE_TARGET, EFFECTS.EXILE_CREATURE, EFFECTS.STASIS_AND_DRAW
                 ].includes(effect);
             }
 
@@ -1720,11 +1776,29 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     addLog(`${played.name} entra con +${alfa.val}F permanente grazie a ${alfa.name}!`);
                 }
 
+                if (played.type === CARD_TYPES.SPELL) {
+                    setLastSpellTurn(prev => ({ ...prev, p1: turnCount }));
+                }
                 if (played.type === CARD_TYPES.CREATURE) {
                     setP1Field(prev => [...prev, played]);
                 }
 
-                if (needsTarget(played) || [EFFECTS.SACRIFICE_ALLY_BUFF, EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW].includes(played.effect)) {
+                if (effectNeedsTwoTargets(played.effect)) {
+                    let message = "Seleziona il primo bersaglio...";
+                    if (played.effect === EFFECTS.MOVE_MODIFIERS) {
+                        message = "Seleziona la creatura SORGENTE...";
+                    }
+                    setMultiTargetState({
+                        source: played,
+                        targets: [],
+                        count: 2,
+                        message: message
+                    });
+                    setSelectedCard(null);
+                    setPaymentCards([]);
+                    addLog("Seleziona due bersagli...");
+                }
+                else if (effectNeedsSingleTarget(played.effect) || [EFFECTS.SACRIFICE_ALLY_BUFF, EFFECTS.SACRIFICE_DRAW, EFFECTS.SACRIFICE_WEAK_ALLY_DRAW].includes(played.effect)) {
                     const targetsAlly = effectTargetsAlly(played.effect);
                     let validTargetsExist = true;
 
@@ -1774,6 +1848,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
 
                 const targetsAlly = effectTargetsAlly(pendingEffect.effect);
                 const targetsEnemy = effectTargetsEnemy(pendingEffect.effect);
+                const targetsAny = effectTargetsAny(pendingEffect.effect);
                 
                 let valid = false;
                 if (targetsAlly) {
@@ -1793,6 +1868,21 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 } else if (targetsEnemy) {
                     if (isEnemyUnit) valid = true;
                     else { addLog("Devi selezionare un'unità NEMICA!"); return; }
+                } else if (targetsAny) {
+                    if (isMyUnit || isEnemyUnit) {
+                        if (pendingEffect.effect === EFFECTS.CLONE_WEAK_CREATURE) {
+                            if (getEffectiveStrength(target) <= pendingEffect.val) {
+                                valid = true;
+                            } else {
+                                addLog(`Bersaglio non valido! Deve avere Forza ${pendingEffect.val} o meno.`);
+                                return;
+                            }
+                        } else {
+                           valid = true;
+                        }
+                    } else {
+                        addLog("Bersaglio non valido."); return;
+                    }
                 }
 
                 if (valid) {
@@ -1803,8 +1893,39 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 }
             };
 
+            const handleMultiTargetClick = (target) => {
+                if (!multiTargetState) return;
+
+                if (multiTargetState.targets.some(t => t.uid === target.uid)) {
+                    addLog("Hai già selezionato questa creatura.");
+                    return;
+                }
+
+                const newTargets = [...multiTargetState.targets, target];
+
+                if (newTargets.length === multiTargetState.count) {
+                    resolveEffect(multiTargetState.source, newTargets, 1);
+                    setMultiTargetState(null);
+                    setIsProcessing(true);
+                    setTimeout(() => endTurn(1), 1000);
+                } else {
+                    let message = "Seleziona il secondo bersaglio...";
+                    if (multiTargetState.source.effect === EFFECTS.MOVE_MODIFIERS) {
+                        message = "Seleziona la creatura DESTINAZIONE...";
+                    }
+                    setMultiTargetState(prev => ({
+                        ...prev,
+                        targets: newTargets,
+                        message: message
+                    }));
+                }
+            };
+
             const handleFieldCardClick = (card) => {
-                if (isTargeting) {
+                if (multiTargetState) {
+                    handleMultiTargetClick(card);
+                }
+                else if (isTargeting) {
                     handleTargetClick(card);
                 } else {
                     setZoomedCard(card);
@@ -1815,10 +1936,28 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 }
             };
             
-            const killCreature = (creatureToKill, ownerPid, isSacrifice = false) => {
+            const killCreature = (creatureToKill, ownerPid, isSacrifice = false, source = null) => {
                 const myFieldSetter = ownerPid === 1 ? setP1Field : setP2Field;
                 const myGraveSetter = ownerPid === 1 ? setP1Grave : setP2Grave;
                 const myHandSetter = ownerPid === 1 ? setP1Hand : setP2Hand;
+
+                if (source && source.type === CARD_TYPES.SPELL && creatureToKill.effect === EFFECTS.MIRAGE_HEXPROOF_SPELLS) {
+                    addLog(`${creatureToKill.name} è immune agli incantesimi!`);
+                    return;
+                }
+
+                const isMirage = creatureToKill.isMirage || [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(creatureToKill.effect);
+                const canProtect = ownerPid === 1 ? protectMirage.p1 : protectMirage.p2;
+
+                if (isMirage && canProtect && source && needsTarget(source)) {
+                    addLog(`Il Custode del Velo protegge ${creatureToKill.name}!`);
+                    if (ownerPid === 1) {
+                        setProtectMirage(prev => ({ ...prev, p1: false }));
+                    } else {
+                        setProtectMirage(prev => ({ ...prev, p2: false }));
+                    }
+                    return;
+                }
 
                 // Remove from field and apply triggers to remaining allies in one go.
                 myFieldSetter(prevField => {
@@ -1835,25 +1974,38 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     addLog(`${creatureToKill.name} torna in mano al proprietario!`);
                     const cardToReturn = { ...creatureToKill, currentStrength: creatureToKill.strength, tempStrength: 0 };
                     myHandSetter(prev => [...prev, cardToReturn]);
-                } else {
+                } else if (source && source.effect === EFFECTS.EXILE_CREATURE) {
+                    // Do nothing, card is exiled
+                }
+                else {
                     // Not returning to hand, so it goes to grave and triggers standard deathrattles.
                     myGraveSetter(prev => [creatureToKill, ...prev]);
                     processDeathrattles([creatureToKill]);
                 }
             };
    
-            const needsTarget = (c) => [
-                EFFECTS.DESTROY_WEAK, EFFECTS.DESTROY_EXACT, EFFECTS.DEBUFF_ENEMY, 
-                EFFECTS.BOUNCE_ENEMY, EFFECTS.BUFF_TARGET_ALLY_PERMANENT, EFFECTS.TEMP_DEBUFF_ENEMY, 
-                EFFECTS.TEMP_BUFF_TARGET_ALLY, EFFECTS.DESTROY_WOUNDED, EFFECTS.TRANSFER_STRENGTH, 
+            const effectNeedsSingleTarget = (effect) => [
+                EFFECTS.DESTROY_WEAK, EFFECTS.DESTROY_EXACT, EFFECTS.DEBUFF_ENEMY,
+                EFFECTS.BOUNCE_ENEMY, EFFECTS.BUFF_TARGET_ALLY_PERMANENT, EFFECTS.TEMP_DEBUFF_ENEMY,
+                EFFECTS.TEMP_BUFF_TARGET_ALLY, EFFECTS.DESTROY_WOUNDED, EFFECTS.TRANSFER_STRENGTH,
                 EFFECTS.AURA_DEBUFF_ENEMY, EFFECTS.STEAL_STRENGTH, EFFECTS.DEBUFF_WEAK_ENEMY,
-                // New Human effects that require a target
                 EFFECTS.FORMATION_DESTROY_WEAK_3, EFFECTS.FORMATION_3_ALLY_TEMP_BUFF_5,
                 EFFECTS.ALLY_PERM_BUFF_2_AND_HEXPROOF_TURN, EFFECTS.DESTROY_WEAK_OR_WEAKER_2,
                 EFFECTS.FORMATION_4_ALLY_TEMP_BUFF_5,
-                // New Undead effects
-                EFFECTS.SACRIFICE_WEAK_ALLY_DRAW
-            ].includes(c.effect);
+                EFFECTS.SACRIFICE_WEAK_ALLY_DRAW,
+                // Arcanum
+                EFFECTS.CREATE_MIRAGE_COPY, EFFECTS.STASIS_AND_DRAW, EFFECTS.EXILE_CREATURE,
+                EFFECTS.BOUNCE_ALLY_DRAW,
+                EFFECTS.FREEZE_STRENGTH, EFFECTS.TURN_TO_FRAGILE_MIRAGE, EFFECTS.SACRIFICE_MIRAGE_DRAW_3,
+                EFFECTS.SWAP_STRENGTH_ALLY, EFFECTS.CLONE_WEAK_CREATURE, EFFECTS.STASIS,
+                EFFECTS.SILENCE_TARGET
+            ].includes(effect);
+
+            const effectNeedsTwoTargets = (effect) => [EFFECTS.SWAP_BASE_STRENGTH, EFFECTS.MOVE_MODIFIERS].includes(effect);
+
+            const needsTarget = (card) => {
+                return effectNeedsSingleTarget(card.effect) || effectNeedsTwoTargets(card.effect);
+            };
 
             const effectOpensModal = (effect) => {
                 return [
@@ -1901,12 +2053,13 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 return newField;
             };
 
-            const resolveEffect = (source, target, pid, passedState) => {  
+            const resolveEffect = (source, targetOrTargets, pid, passedState) => {
                 const isP1 = pid === 1;  
                 const [ myField, enemyField, myGrave ] = passedState ? [passedState.myField, passedState.enemyField, passedState.myGrave] : (isP1 ? [p1FieldRef.current, p2FieldRef.current, p1GraveRef.current] : [p2FieldRef.current, p1FieldRef.current, p2GraveRef.current]);
                 const [ myFieldSetter, enemyFieldSetter, myGraveSetter, enemyGraveSetter, myHandSetter, enemyHandSetter, myDeckSetter ] = isP1 ? [setP1Field, setP2Field, setP1Grave, setP2Grave, setP1Hand, setP2Hand, setP1Deck] : [setP2Field, setP1Field, setP2Grave, setP1Grave, setP2Hand, setP1Hand, setP2Deck];
                 
                 let msg = `${source.name}: `; let creaturesThatDied = [];  
+                const target = Array.isArray(targetOrTargets) ? targetOrTargets[0] : targetOrTargets; // for single target effects
    
                 switch(source.effect) {   
                     case EFFECTS.DRAW_CARD:
@@ -1933,14 +2086,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     case EFFECTS.DESTROY_WEAK:   
                         if (target && getEffectiveStrength(target) <= source.val) {   
                             if (protection[isP1 ? 'p2_ally' : 'p1_ally'] === target.uid || target.isIndestructible) { msg += `${target.name} è protetto!`; break; }   
-                            killCreature(target, isP1 ? 2 : 1);
+                            killCreature(target, isP1 ? 2 : 1, false, source);
                             msg += `Distrutto ${target.name}!`;   
                         } else msg += "Fallito.";   
                         break;   
                     case EFFECTS.DESTROY_EXACT:   
                         if (target && getEffectiveStrength(target) === source.val) {   
                             if (protection[isP1 ? 'p2_ally' : 'p1_ally'] === target.uid || target.isIndestructible) { msg += `${target.name} è protetto!`; break; }   
-                            killCreature(target, isP1 ? 2 : 1);
+                            killCreature(target, isP1 ? 2 : 1, false, source);
                             msg += `Distrutto ${target.name}!`;   
                         }   
                         break;   
@@ -2045,7 +2198,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         if (target) { myFieldSetter(prev => prev.map(c => c.uid === target.uid ? {...c, tempStrength: c.tempStrength + source.val} : c)); msg += `Potenziato ${target.name} temporaneamente.`; } break;   
                     case EFFECTS.DESTROY_WOUNDED:   
                         if (target && getEffectiveStrength(target) < target.strength) { 
-                            killCreature(target, isP1 ? 2 : 1);
+                            killCreature(target, isP1 ? 2 : 1, false, source);
                             msg += `Distrutto ${target.name} ferito!`; 
                         } break;   
                     case EFFECTS.DISCARD_THEN_DRAW:   
@@ -2159,7 +2312,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         if (myField.length >= 3) {
                             if (target && getEffectiveStrength(target) <= source.val) {
                                 if (protection[isP1 ? 'p2_ally' : 'p1_ally'] === target.uid || target.isIndestructible) { msg += `${target.name} è protetto!`; break; }
-                                killCreature(target, isP1 ? 2 : 1);
+                                killCreature(target, isP1 ? 2 : 1, false, source);
                                 msg += `Formazione attiva! Distrutto ${target.name}!`;
                             } else msg += "Nessun bersaglio valido.";
                         } else msg += "Formazione non attiva.";
@@ -2271,7 +2424,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     case EFFECTS.DESTROY_WEAK_OR_WEAKER_2:
                          if (target && getEffectiveStrength(target) <= 2) {
                             if (protection[isP1 ? 'p2_ally' : 'p1_ally'] === target.uid || target.isIndestructible) { msg += `${target.name} è protetto!`; break; }
-                            killCreature(target, isP1 ? 2 : 1);
+                            killCreature(target, isP1 ? 2 : 1, false, source);
                             msg += `Distrutto ${target.name}!`;
                         } else msg += "Nessun bersaglio valido.";
                         break;
@@ -2311,6 +2464,236 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         } else {
                             msg += "Nessuna carta da recuperare nel cimitero.";
                         }
+                        break;
+                    // --- ARCANUM EFFECTS ---
+                    case EFFECTS.DISTORTION:
+                        msg += `altera la realtà, riducendo la soglia di vittoria di ${source.val}.`;
+                        break;
+                    case EFFECTS.STASIS:
+                        if (target) {
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            msg += `${target.name} è in stasi!`;
+                        }
+                        break;
+                    case EFFECTS.STASIS_STRONGEST:
+                        const strongestEnemy = [...enemyField].sort((a, b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
+                        if (strongestEnemy) {
+                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true } : c));
+                            msg += `${strongestEnemy.name} è in stasi!`;
+                        } else {
+                            msg += "Nessun nemico da mettere in stasi.";
+                        }
+                        break;
+                    case EFFECTS.STASIS_AND_DRAW:
+                        if (target) {
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            msg += `${target.name} è in stasi!`;
+                            drawCards(pid, 1);
+                            msg += ` Pesca una carta.`;
+                        }
+                        break;
+                    case EFFECTS.EXILE_CREATURE:
+                        if (target) {
+                            killCreature(target, isP1 ? 2 : 1, false, source);
+                            msg += `${target.name} è stato rimosso dal gioco.`;
+                        }
+                        break;
+                    case EFFECTS.MIRAGE_COPY_STRENGTH:
+                        const strongestEnemyForCopy = [...enemyField].sort((a, b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
+                        if (strongestEnemyForCopy) {
+                            const newStrength = getEffectiveStrength(strongestEnemyForCopy);
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? { ...c, currentStrength: newStrength } : c));
+                            msg += `copia la forza di ${strongestEnemyForCopy.name}.`;
+                        } else {
+                            msg += "Nessun nemico da copiare.";
+                        }
+                        break;
+                    case EFFECTS.FREEZE_STRENGTH:
+                        if (target) {
+                            myFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isFrozen: true } : c));
+                            msg += `La forza di ${target.name} è stata bloccata.`;
+                        }
+                        break;
+                    case EFFECTS.SACRIFICE_MIRAGE_DRAW_3:
+                        if (target && (target.isMirage || [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(target.effect))) {
+                            killCreature(target, pid, true, source);
+                            drawCards(pid, 3);
+                            msg += `Sacrificato ${target.name} per pescare 3 carte.`;
+                        } else {
+                            msg += "Nessun bersaglio valido per il sacrificio.";
+                        }
+                        break;
+                    case EFFECTS.BUFF_IF_SPELL_LAST_TURN:
+                        const opponentLastSpellTurn = lastSpellTurn[isP1 ? 'p2' : 'p1'];
+                        const currentTurnForSpell = isP1 ? turnCount : turnCount - 1;
+                        if (opponentLastSpellTurn > 0 && opponentLastSpellTurn >= currentTurnForSpell - 1) {
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? { ...c, currentStrength: c.currentStrength + source.val } : c));
+                            msg += `L'avversario ha giocato una magia nel turno precedente! Ottiene +${source.val} Forza.`;
+                        } else {
+                            msg += "L'avversario non ha giocato magie nel turno precedente.";
+                        }
+                        break;
+                    case EFFECTS.SILENCE_TARGET:
+                        if (target) {
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, effect: EFFECTS.NONE, desc: "Silenced." } : c));
+                            msg += `${target.name} è stato silenziato.`;
+                        }
+                        break;
+                    // --- ARCANUM INTERACTIVE EFFECTS ---
+                    case EFFECTS.SWAP_TOTAL_STRENGTH:
+                        const p1Score = calculateTotalStrength(p1Field, p2Field);
+                        const p2Score = calculateTotalStrength(p2Field, p1Field);
+                        const diff = p1Score - p2Score;
+                        // p1 has higher score, debuff p2 and buff p1
+                        if (diff > 0) {
+                            const strongestP2 = [...p2Field].sort((a,b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
+                            const strongestP1 = [...p1Field].sort((a,b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
+                            if (strongestP2) {
+                                enemyFieldSetter(prev => prev.map(c => c.uid === strongestP2.uid ? { ...c, tempStrength: c.tempStrength - diff } : c));
+                            }
+                            if (strongestP1) {
+                                myFieldSetter(prev => prev.map(c => c.uid === strongestP1.uid ? { ...c, tempStrength: c.tempStrength + diff } : c));
+                            }
+                        } else { // p2 has higher score, buff p2 and debuff p1
+                            const strongestP1 = [...p1Field].sort((a,b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
+                            const strongestP2 = [...p2Field].sort((a,b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
+                             if (strongestP1) {
+                                myFieldSetter(prev => prev.map(c => c.uid === strongestP1.uid ? { ...c, tempStrength: c.tempStrength + diff } : c));
+                            }
+                            if (strongestP2) {
+                                enemyFieldSetter(prev => prev.map(c => c.uid === strongestP2.uid ? { ...c, tempStrength: c.tempStrength - diff } : c));
+                            }
+                        }
+                        msg += `ha scambiato la forza totale per questo turno.`;
+                        break;
+                    case EFFECTS.CREATE_MIRAGE_COPY:
+                        if (target) {
+                            const newCard = { ...target, uid: generateId(), isMirage: true, desc: "Miraggio." };
+                            myFieldSetter(prev => [...prev, newCard]);
+                            msg += `ha creato una copia miraggio di ${target.name}.`;
+                        }
+                        break;
+                    case EFFECTS.CLONE_WEAK_CREATURE:
+                        if (target) {
+                            const clonedCard = { ...target, name: "Clone Instabile", uid: source.uid, currentStrength: target.strength, tempStrength: 0 };
+                            myFieldSetter(prev => prev.map(c => c.uid === source.uid ? clonedCard : c));
+                            msg += `è diventato una copia di ${target.name}.`;
+                        }
+                        break;
+                    case EFFECTS.TURN_TO_FRAGILE_MIRAGE:
+                        if (target) {
+                            const fieldSetter = myField.some(c => c.uid === target.uid) ? myFieldSetter : enemyFieldSetter;
+                            fieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isMirage: true, desc: "Miraggio." } : c));
+                            msg += `${target.name} è diventato un miraggio fragile.`;
+                        }
+                        break;
+                    case EFFECTS.SWAP_STRENGTH_ALLY:
+                        if (target) {
+                            const sourceCard = myField.find(c => c.uid === source.uid);
+                            if (sourceCard) {
+                                const sourceStrength = sourceCard.currentStrength;
+                                const targetStrength = target.currentStrength;
+                                myFieldSetter(prev => prev.map(c => {
+                                    if (c.uid === source.uid) return { ...c, currentStrength: targetStrength };
+                                    if (c.uid === target.uid) return { ...c, currentStrength: sourceStrength };
+                                    return c;
+                                }));
+                                msg += `ha scambiato la forza con ${target.name}.`;
+                            }
+                        }
+                        break;
+                    case EFFECTS.SWAP_BASE_STRENGTH:
+                        if (Array.isArray(targetOrTargets) && targetOrTargets.length === 2) {
+                            const [target1, target2] = targetOrTargets;
+                            const strength1 = target1.strength;
+                            const strength2 = target2.strength;
+
+                            const diff1 = target1.currentStrength - strength1;
+                            const diff2 = target2.currentStrength - strength2;
+
+                            const updateCreature = (creature, newBaseStrength, diff) => ({
+                                ...creature,
+                                strength: newBaseStrength,
+                                currentStrength: newBaseStrength + diff
+                            });
+
+                            myFieldSetter(prev => prev.map(c => {
+                                if (c.uid === target1.uid) return updateCreature(c, strength2, diff1);
+                                if (c.uid === target2.uid) return updateCreature(c, strength1, diff2);
+                                return c;
+                            }));
+                            enemyFieldSetter(prev => prev.map(c => {
+                                if (c.uid === target1.uid) return updateCreature(c, strength2, diff1);
+                                if (c.uid === target2.uid) return updateCreature(c, strength1, diff2);
+                                return c;
+                            }));
+                            msg += `scambia la forza base tra ${target1.name} e ${target2.name}.`;
+                        }
+                        break;
+                    case EFFECTS.MOVE_MODIFIERS:
+                        if (Array.isArray(targetOrTargets) && targetOrTargets.length === 2) {
+                            const [sourceCreature, destCreature] = targetOrTargets;
+
+                            const permModifier = sourceCreature.currentStrength - sourceCreature.strength;
+                            const tempModifier = sourceCreature.tempStrength;
+
+                            const resetSource = (creature) => ({
+                                ...creature,
+                                currentStrength: creature.strength,
+                                tempStrength: 0
+                            });
+
+                            const applyModifiers = (creature) => ({
+                                ...creature,
+                                currentStrength: creature.currentStrength + permModifier,
+                                tempStrength: creature.tempStrength + tempModifier
+                            });
+
+                            myFieldSetter(prev => prev.map(c => {
+                                if (c.uid === sourceCreature.uid) return resetSource(c);
+                                if (c.uid === destCreature.uid) return applyModifiers(c);
+                                return c;
+                            }));
+                            enemyFieldSetter(prev => prev.map(c => {
+                                if (c.uid === sourceCreature.uid) return resetSource(c);
+                                if (c.uid === destCreature.uid) return applyModifiers(c);
+                                return c;
+                            }));
+                            msg += `sposta i modificatori da ${sourceCreature.name} a ${destCreature.name}.`;
+                        }
+                        break;
+                    case EFFECTS.BOUNCE_ALLY_DRAW:
+                        if (target) {
+                            const isMyUnit = myField.some(c => c.uid === target.uid);
+                            const fieldSetter = isMyUnit ? myFieldSetter : enemyFieldSetter;
+                            const handSetter = isMyUnit ? myHandSetter : enemyHandSetter;
+                            fieldSetter(prev => prev.filter(c => c.uid !== target.uid));
+                            handSetter(prev => [...prev, target]);
+                            if (isMyUnit) {
+                                drawCards(pid, 1);
+                                msg += `ha fatto tornare in mano ${target.name} e ha pescato una carta.`;
+                            } else {
+                                msg += `ha fatto tornare in mano ${target.name}.`;
+                            }
+                        }
+                        break;
+                    case EFFECTS.REORDER_ENEMY_DECK_3:
+                        const enemyDeckSetter = isP1 ? setP2Deck : setP1Deck;
+                        if (isP1) {
+                            enemyDeckSetter(prev => {
+                                const top3 = prev.slice(0, 3);
+                                setReorderDeckState(top3);
+                                return prev;
+                            });
+                        } else {
+                            // AI logic: just put the strongest on top
+                             enemyDeckSetter(prev => {
+                                const top3 = prev.slice(0, 3);
+                                const ordered = top3.sort((a,b) => b.strength - a.strength);
+                                return [...ordered, ...prev.slice(3)];
+                            });
+                        }
+                        msg += `guarda le prime 3 carte del mazzo nemico.`;
                         break;
                     default:
                         msg += "Effetto non ancora implementato.";
@@ -2427,6 +2810,12 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             return (
         <div className="h-screen w-full flex flex-col bg-gray-900 overflow-hidden text-sm relative">
+            {reorderDeckState && <ReorderDeckModal cards={reorderDeckState} onConfirm={(orderedCards) => {
+                setP2Deck(prev => [...orderedCards, ...prev.slice(orderedCards.length)]);
+                setReorderDeckState(null);
+                setIsProcessing(true);
+                setTimeout(() => endTurn(1), 1000);
+            }} />}
             {zoomedCard && (
                 <div className="card-zoom-overlay" onClick={() => setZoomedCard(null)}>
                     <div
@@ -2457,7 +2846,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
                     <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
-                        {p2Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} isValidTarget={isTargeting && isEnemyTargeting} />)}
+                    {p2Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} isValidTarget={(isTargeting && isEnemyTargeting) || multiTargetState} />)}
                     </div>
                     <div className="w-24 flex flex-col justify-center items-center gap-4 p-2 bg-black/20">
                         <Pile type="DECK" count={p2Deck.length} />
@@ -2492,6 +2881,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                                 </>
                             )}
                             {isTargeting && <div className="text-yellow-400 font-bold animate-pulse text-sm px-2 border border-yellow-500 rounded bg-yellow-900/50">BERSAGLIO!</div>}
+                            {multiTargetState && <div className="text-yellow-400 font-bold animate-pulse text-sm px-2 border border-yellow-500 rounded bg-yellow-900/50">{multiTargetState.message}</div>}
                         </>
                     )}
                     {isProcessing && <div className="text-gray-400 italic text-sm animate-pulse">In attesa...</div>}
@@ -2511,7 +2901,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
                     <div className="flex-1 flex items-center justify-center p-2 gap-2 flex-wrap overflow-y-auto content-start play-zone">
-                        {p1Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} isValidTarget={isAllyTargeting} />)}
+                    {p1Field.map(c => <Card key={c.uid} card={c} onClick={() => handleFieldCardClick(c)} isValidTarget={isAllyTargeting || multiTargetState} />)}
                     </div>
                     <div className="w-24 flex flex-col justify-center items-center gap-4 p-2 bg-black/20">
                         <Pile type="DECK" count={p1Deck.length} onClick={isDeckTargeting ? () => handleTargetClick(p1Deck[0]) : ()=>{}} />
