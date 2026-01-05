@@ -273,13 +273,14 @@
             .mobile-hand > .card {
                 margin-right: -70px;
                 flex-shrink: 0;
+                z-index: var(--card-index);
             }
             .mobile-hand > .card:last-child {
                 margin-right: 0;
             }
             .mobile-hand > .card:hover {
-                transform: translateY(-10px) scale(1.1);
-                z-index: 100;
+                transform: translateY(-10px) scale(1.1) !important;
+                z-index: 100 !important;
             }
 
             .mobile-hand .selected-to-play {
@@ -2987,7 +2988,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                             onClick={handleHandClick}
                             onPressStart={handleCardPressStart}
                             onPressEnd={handleCardPressEnd}
-                            style={{ zIndex: p1Hand.length - index }}
+                            style={{ '--card-index': p1Hand.length - index }}
                         />
                     ))}
                 </div>
