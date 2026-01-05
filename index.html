@@ -2831,6 +2831,15 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 needed = Math.max(0, baseCost - costModifier.p1);
             }
             const canPlay = selectedCard && totalPay >= needed;   
+
+            let handToRender = [...p1Hand];
+            if (selectedCard) {
+                const selectedIdx = handToRender.findIndex(c => c.uid === selectedCard.uid);
+                if (selectedIdx > -1) {
+                    const [selected] = handToRender.splice(selectedIdx, 1);
+                    handToRender.unshift(selected);
+                }
+            }
    
             const isDeckTargeting = isTargeting && pendingEffect && [EFFECTS.SCRY].includes(pendingEffect.effect);   
             const isAllyTargeting = isTargeting && pendingEffect && effectTargetsAlly(pendingEffect.effect);
@@ -2973,7 +2982,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             {/* HAND AREA */}
             <div className="bg-black/70 backdrop-blur-sm border-t-2 border-yellow-800 flex flex-col shadow-2xl z-30 hand-area shrink-0">
                 <div className="flex-1 flex items-center justify-center gap-2 px-4 overflow-x-auto overflow-y-hidden py-2 mobile-hand">
-                    {p1Hand.map(c => (
+                    {handToRender.map(c => (
                         <Card
                             key={c.uid}
                             card={c}
