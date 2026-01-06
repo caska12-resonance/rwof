@@ -72,6 +72,7 @@
             background-position: center;  
             z-index: 1;  
             filter: brightness(0.7) contrast(1.05);  
+            pointer-events: none;
         }  
   
         .card-cost {  
@@ -152,7 +153,6 @@
   
         .selected-to-play {
             box-shadow: 0 0 0 4px #3b82f6 !important;
-            transform: translateY(-20px) scale(1.1);
             z-index: 45;
         }
         .selected-to-discard {
@@ -2849,17 +2849,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setChoiceState(null);   
             };   
    
-            let handToRender = [...p1Hand];
-            if (isMobile && selectedCard) {
-                const selectedIdx = p1Hand.findIndex(c => c.uid === selectedCard.uid);
-                if (selectedIdx > -1) {
-                    handToRender = [
-                        ...p1Hand.slice(0, selectedIdx),
-                        ...p1Hand.slice(selectedIdx + 1),
-                        p1Hand[selectedIdx]
-                    ];
-                }
-            }
 
             const p1FactionBG = playerFaction === FACTIONS.HUMAN ? 'human-bg' : playerFaction === FACTIONS.UNDEAD ? 'undead-bg' : 'beast-bg';   
             const p2FactionBG = enemyFaction === FACTIONS.HUMAN ? 'human-bg' : enemyFaction === FACTIONS.UNDEAD ? 'undead-bg' : 'beast-bg';   
@@ -2972,21 +2961,21 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             <div className="bg-black/70 backdrop-blur-sm border-t-2 border-yellow-800 flex flex-col shadow-2xl z-30 hand-area shrink-0">
                 {isMobile ? (
                     <div className="relative w-full h-full flex items-center justify-center">
-                        {handToRender.map((c, index) => (
+                    {p1Hand.map((c, index) => (
                             <div
                                 key={c.uid}
+                            onClick={() => handleHandClick(c)}
                                 className="absolute transition-all duration-300 ease-in-out"
                                 style={{
-                                    left: `calc(50% - 50px + ${(index - (handToRender.length - 1) / 2) * 40}px)`,
-                                    zIndex: handToRender.length - index,
-                                    transform: selectedCard?.uid === c.uid ? 'translateY(-20px) scale(1.1)' : ''
+                                    left: `calc(50% - 50px + ${(index - (p1Hand.length - 1) / 2) * 40}px)`,
+                                    zIndex: selectedCard?.uid === c.uid ? 99 : index,
+                                    transform: selectedCard?.uid === c.uid ? 'scale(1.5)' : 'none'
                                 }}
                             >
                                 <Card
                                     card={c}
                                     isSelected={selectedCard && selectedCard.uid === c.uid}
                                     isPaymentSelected={paymentCards.some(x => x.uid === c.uid)}
-                                    onClick={handleHandClick}
                                 />
                             </div>
                         ))}
