@@ -153,6 +153,7 @@
   
         .selected-to-play {
             box-shadow: 0 0 0 4px #3b82f6 !important;
+            transform: scale(1.1);
             z-index: 45;
         }
         .selected-to-discard {
@@ -969,6 +970,59 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             );
         };
 
+        const MobileSelectionModal = ({ selectedCard, otherHandCards, paymentCards, onConfirm, onCancel, onCardSelect }) => {
+            if (!selectedCard) return null;
+
+            const totalPay = paymentCards.reduce((acc, card) => acc + card.strength, 0);
+            const isMirageCard = [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(selectedCard.effect) || selectedCard.isMirage;
+            const needed = isMirageCard ? 1 : selectedCard.strength;
+            const canPlay = totalPay >= needed;
+
+            return (
+                <div className="absolute inset-0 bg-slate-900 flex flex-col p-2 z-[900]" data-testid="mobile-selection-modal">
+                    {/* Top Section: Card to Play */}
+                    <div className="flex flex-col items-center p-2 border-b-2 border-slate-700">
+                        <h2 className="text-lg font-bold text-yellow-400 mb-2">Gioca questa carta:</h2>
+                        <Card card={selectedCard} />
+                    </div>
+
+                    {/* Middle Section: Payment Grid */}
+                    <div className="flex-1 overflow-y-auto p-2">
+                        <h3 className="text-md font-bold text-gray-300 mb-2">Paga il costo scartando:</h3>
+                        <div className="grid grid-cols-3 gap-2">
+                            {otherHandCards.map(card => (
+                                <Card
+                                    key={card.uid}
+                                    card={card}
+                                    isPaymentSelected={paymentCards.some(p => p.uid === card.uid)}
+                                    onClick={() => onCardSelect(card)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Bottom Section: Actions & Cost */}
+                    <div className="flex flex-col items-center p-2 border-t-2 border-slate-700">
+                         <span className={`text-lg font-bold mb-2 ${canPlay ? 'text-green-400' : 'text-red-400'}`}>
+                            Costo: {totalPay} / {needed}
+                        </span>
+                        <div className="flex w-full justify-around">
+                            <button onClick={onCancel} className="px-8 py-3 rounded bg-red-700 hover:bg-red-600 text-white font-bold text-lg">
+                                Annulla
+                            </button>
+                            <button
+                                disabled={!canPlay}
+                                onClick={onConfirm}
+                                className={`px-8 py-3 rounded text-white font-bold text-lg ${canPlay ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 cursor-not-allowed'}`}
+                            >
+                                GIOCA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const RulesModal = ({ onClose }) => (
             <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-[700] p-4 md:p-8" onClick={onClose}>
                 <div className="w-full max-w-4xl h-[80vh] bg-slate-900 rounded-lg p-4 flex flex-col border-2 border-slate-600 shadow-2xl">
@@ -1074,6 +1128,10 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [multiTargetState, setMultiTargetState] = React.useState(null);
             const [postChoiceAction, setPostChoiceAction] = React.useState(null);
             const [isRulesVisible, setIsRulesVisible] = React.useState(false);
+            const [mobileSelectionState, setMobileSelectionState] = React.useState({
+                isOpen: false,
+                cardToPlay: null
+            });
 
             const [isMobile, setIsMobile] = React.useState(false);
 
@@ -1730,8 +1788,15 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 return score;
             };
    
-            const handleHandClick = (card) => {   
-                if (gameState !== 'PLAYER_TURN' || isProcessing) return;   
+            const handleHandClick = (card) => {
+                if (gameState !== 'PLAYER_TURN' || isProcessing) return;
+
+                if (isMobile) {
+                    setMobileSelectionState({ isOpen: true, cardToPlay: card });
+                    return;
+                }
+
+                // Desktop logic remains the same
                 if (isDiscarding) {   
                     const passedState = { myField: p1FieldRef.current, enemyField: p2FieldRef.current, myGrave: p1GraveRef.current, };  
                     resolveEffect(pendingDiscardEffect, card, 1, passedState);   
@@ -1795,24 +1860,25 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 }
             };
 
-            const handlePlayConfirm = () => {
-                if (selectedCard && selectedCard.strength >= 3) {
-                    handleMirageOnPlay(selectedCard);
+            const handlePlayConfirm = (cardToPlay = null) => {
+                const card = cardToPlay || selectedCard;
+                if (card && card.strength >= 3) {
+                    handleMirageOnPlay(card);
                 }
-                if (!selectedCard) return;
+                if (!card) return;
 
-                const isMirageCard = [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(selectedCard.effect) || selectedCard.isMirage;
-                const baseCost = isMirageCard ? 1 : selectedCard.strength;
+                const isMirageCard = [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(card.effect) || card.isMirage;
+                const baseCost = isMirageCard ? 1 : card.strength;
                 const cost = Math.max(0, baseCost - costModifier.p1);
 
                 const pay = paymentCards.reduce((a, c) => a + c.strength, 0);
                 if (pay < cost) { addLog(`Forza insufficiente! (${pay}/${cost})`); return; }
 
-                const usedIds = [selectedCard.uid, ...paymentCards.map(c => c.uid)];
+                const usedIds = [card.uid, ...paymentCards.map(c => c.uid)];
                 setP1Hand(prev => prev.filter(c => !usedIds.includes(c.uid)));
                 setP1Grave(prev => [...prev, ...paymentCards]);
 
-                const played = { ...selectedCard, tempStrength: 0 };
+                const played = { ...card, tempStrength: 0 };
 
                 const alfa = p1Field.find(c => c.effect === EFFECTS.FACTION_WIDE_BUFF_AURA);
                 if (alfa && played.faction === FACTIONS.BEAST && played.uid !== alfa.uid) {
@@ -2855,6 +2921,29 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             return (
         <div className="h-screen w-full flex flex-col bg-gray-900 overflow-hidden text-sm relative">
+            {mobileSelectionState.isOpen && (
+                <MobileSelectionModal
+                    selectedCard={mobileSelectionState.cardToPlay}
+                    otherHandCards={p1Hand.filter(c => c.uid !== mobileSelectionState.cardToPlay.uid)}
+                    paymentCards={paymentCards}
+                    onConfirm={() => {
+                        handlePlayConfirm(mobileSelectionState.cardToPlay);
+                        setMobileSelectionState({ isOpen: false, cardToPlay: null });
+                        setPaymentCards([]);
+                    }}
+                    onCancel={() => {
+                        setMobileSelectionState({ isOpen: false, cardToPlay: null });
+                        setPaymentCards([]);
+                    }}
+                    onCardSelect={(card) => {
+                        setPaymentCards(prev =>
+                            prev.some(p => p.uid === card.uid)
+                                ? prev.filter(p => p.uid !== card.uid)
+                                : [...prev, card]
+                        );
+                    }}
+                />
+            )}
             {isRulesVisible && <RulesModal onClose={() => setIsRulesVisible(false)} />}
             {reorderDeckState && <ReorderDeckModal cards={reorderDeckState} onConfirm={(orderedCards) => {
                 setP2Deck(prev => [...orderedCards, ...prev.slice(orderedCards.length)]);
@@ -2902,6 +2991,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             </div>
 
             {/* MID BAR */}
+            {!mobileSelectionState.isOpen && (
             <div className="h-10 bg-black flex items-center justify-between px-4 z-20 border-y-2 border-yellow-800 shadow-xl shrink-0">
                 <div className="w-2/3 h-full overflow-y-auto scrollbar-hide py-1" data-testid="log-container">
                     {logs.slice(0, 1).map((log, i) => (
@@ -2934,6 +3024,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     {isProcessing && <div className="text-gray-400 italic text-sm animate-pulse">In attesa...</div>}
                 </div>
             </div>
+            )}
 
             {/* PLAYER AREA */}
             <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700/50 min-h-0`}>
