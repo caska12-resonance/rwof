@@ -1102,6 +1102,18 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             });
             const [multiTargetState, setMultiTargetState] = React.useState(null);
             const [postChoiceAction, setPostChoiceAction] = React.useState(null);
+            const [isHandExpanded, setIsHandExpanded] = React.useState(false);
+
+            const [isMobile, setIsMobile] = React.useState(false);
+
+            React.useEffect(() => {
+                const checkIsMobile = () => {
+                    setIsMobile(window.innerWidth <= 768);
+                };
+                checkIsMobile();
+                window.addEventListener('resize', checkIsMobile);
+                return () => window.removeEventListener('resize', checkIsMobile);
+            }, []);
    
             const p2HandRef = React.useRef([]);   
             const p1FieldRef = React.useRef([]);   
@@ -1749,6 +1761,12 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             const handleHandClick = (card) => {
                 if (gameState !== 'PLAYER_TURN' || isProcessing) return;
+
+                if (isMobile && !isHandExpanded) {
+                    setIsHandExpanded(true);
+                    return;
+                }
+
                 if (isDiscarding) {   
                     const passedState = { myField: p1FieldRef.current, enemyField: p2FieldRef.current, myGrave: p1GraveRef.current, };  
                     resolveEffect(pendingDiscardEffect, card, 1, passedState);   
@@ -2937,7 +2955,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                                     <span className={`text-sm font-bold ${canPlay ? 'text-green-400' : 'text-red-400'}`}>
                                         Costo: {totalPay}/{needed}
                                     </span>
-                                    <button disabled={!canPlay} onClick={handlePlayConfirm} className={`px-3 py-1 rounded text-sm font-bold shadow ${canPlay ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}>GIOCA</button>
+                                    <button disabled={!canPlay} onClick={() => { handlePlayConfirm(); if(isMobile) setIsHandExpanded(false); }} className={`px-3 py-1 rounded text-sm font-bold shadow ${canPlay ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}>GIOCA</button>
                                     <button onClick={()=>{setSelectedCard(null); setPaymentCards([]);}} className="text-xs text-gray-400 hover:text-white underline">Annulla</button>
                                 </div>
                             )}
@@ -2946,6 +2964,9 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                                     <button onClick={() => setIsLogVisible(true)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">Registro</button>
                                     <button onClick={() => endTurn(1)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">PASSA</button>
                                 </>
+                            )}
+                            {isMobile && isHandExpanded && (
+                                <button onClick={() => setIsHandExpanded(false)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">Chiudi Mano</button>
                             )}
                             {isTargeting && <div className="text-yellow-400 font-bold animate-pulse text-sm px-2 border border-yellow-500 rounded bg-yellow-900/50">BERSAGLIO!</div>}
                             {multiTargetState && <div className="text-yellow-400 font-bold animate-pulse text-sm px-2 border border-yellow-500 rounded bg-yellow-900/50">{multiTargetState.message}</div>}
@@ -2978,17 +2999,51 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             </div>
 
             {/* HAND AREA */}
-            <div className="bg-black/70 backdrop-blur-sm border-t-2 border-yellow-800 flex flex-col shadow-2xl z-30 hand-area shrink-0">
-                <div className="flex-1 flex items-center justify-center gap-2 px-4 overflow-x-auto overflow-y-hidden py-2">
-                    {p1Hand.map(c => (
-                        <Card
-                            key={c.uid} card={c}
-                            isSelected={selectedCard && selectedCard.uid === c.uid}
-                            isPaymentSelected={paymentCards.some(x => x.uid === c.uid)}
-                            onClick={handleHandClick}
-                        />
-                    ))}
-                </div>
+            <div data-testid="hand-area" className={`bg-black/70 backdrop-blur-sm border-t-2 border-yellow-800 flex flex-col shadow-2xl z-30 shrink-0 transition-all duration-300 ease-in-out ${isMobile ? (isHandExpanded ? 'h-3/4' : 'hand-area') : 'hand-area'}`}>
+                {isMobile ? (
+                    isHandExpanded ? (
+                        <div className="flex-1 p-2 overflow-y-auto">
+                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                {p1Hand.map(c => (
+                                    <Card
+                                        key={c.uid}
+                                        card={c}
+                                        isSelected={selectedCard && selectedCard.uid === c.uid}
+                                        isPaymentSelected={paymentCards.some(x => x.uid === c.uid)}
+                                        onClick={() => handleHandClick(c)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                         <div className="relative w-full h-full flex items-center justify-center" onClick={() => setIsHandExpanded(true)}>
+                             <div className="text-white font-bold text-lg animate-pulse z-10">Tocca per vedere la mano</div>
+                            {p1Hand.map((c, index) => (
+                                <div
+                                    key={c.uid}
+                                    className="absolute transition-all duration-300 ease-in-out pointer-events-none"
+                                    style={{
+                                        left: `calc(50% - 50px)`,
+                                        transform: `translateX(${(index - (p1Hand.length - 1) / 2) * 30}px) rotate(${(index - (p1Hand.length - 1) / 2) * 5}deg)`,
+                                    }}
+                                >
+                                    <Card card={c} />
+                                </div>
+                            ))}
+                        </div>
+                    )
+                ) : (
+                    <div className="flex-1 flex items-center justify-center gap-2 px-4 overflow-x-auto overflow-y-hidden py-2">
+                        {p1Hand.map(c => (
+                            <Card
+                                key={c.uid} card={c}
+                                isSelected={selectedCard && selectedCard.uid === c.uid}
+                                isPaymentSelected={paymentCards.some(x => x.uid === c.uid)}
+                                onClick={handleHandClick}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
