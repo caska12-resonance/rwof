@@ -1030,6 +1030,38 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             );
         };
 
+        const RulesModal = ({ onClose }) => (
+            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-[700] p-4 md:p-8" onClick={onClose}>
+                <div className="w-full max-w-4xl h-[80vh] bg-slate-900 rounded-lg p-4 flex flex-col border-2 border-slate-600 shadow-2xl">
+                    <h2 className="text-2xl md:text-3xl font-fantasy text-yellow-400 mb-4 text-center">Come Giocare</h2>
+                    <div className="flex-1 bg-slate-800/50 rounded p-4 overflow-y-auto scrollbar-hide text-gray-300 space-y-4">
+                        <h3 className="text-xl font-bold text-yellow-300">Obiettivo del Gioco</h3>
+                        <p>L'obiettivo è essere il primo giocatore a raggiungere 3 Punti Vittoria (VP). I VP si ottengono raggiungendo determinate soglie di Forza totale in campo.</p>
+
+                        <h3 className="text-xl font-bold text-yellow-300">Soglie di Punti Vittoria</h3>
+                        <ul className="list-disc list-inside space-y-1 pl-4">
+                            <li><strong>10 Forza:</strong> Guadagni 1 VP</li>
+                            <li><strong>15 Forza:</strong> Guadagni 1 VP</li>
+                            <li><strong>20 Forza:</strong> Guadagni 1 VP</li>
+                            <li><strong>30 Forza:</strong> Guadagni 2 VP</li>
+                        </ul>
+                        <p>Una volta che una soglia è stata raggiunta da un giocatore, non può essere reclamata dall'altro.</p>
+
+                        <h3 className="text-xl font-bold text-yellow-300">Come si Gioca una Carta</h3>
+                        <p>Per giocare una carta dalla tua mano, devi pagarne il costo in Forza. Il costo di una carta è uguale alla sua Forza stampata in alto a sinistra.</p>
+                        <p>Per pagare il costo, seleziona la carta che vuoi giocare, poi seleziona una o più carte dalla tua mano fino a quando la loro Forza totale è uguale o superiore al costo. Le carte usate per pagare vengono scartate nel Cimitero.</p>
+                        <p>Le carte di tipo <strong>Creatura</strong> entrano in campo, contribuendo alla tua Forza totale. Le carte di tipo <strong>Magia</strong> hanno un effetto immediato e poi vanno al Cimitero.</p>
+
+                        <h3 className="text-xl font-bold text-yellow-300">Carte Miraggio (Fazione Arcana)</h3>
+                        <p>Le carte con l'abilità "Miraggio" hanno un costo speciale. Per giocarle, devi scartare solo <strong>una</strong> carta qualsiasi dalla tua mano, indipendentemente dalla Forza del Miraggio o della carta scartata. Il loro costo di pagamento è sempre 1.</p>
+                    </div>
+                    <button onClick={onClose} className="mt-4 px-6 py-2 rounded bg-red-700 hover:bg-red-600 text-white font-bold text-lg self-center">
+                        CHIUDI
+                    </button>
+                </div>
+            </div>
+        );
+
         const ReorderDeckModal = ({ cards, onConfirm }) => {
             const [orderedCards, setOrderedCards] = React.useState(cards);
 
@@ -1103,6 +1135,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [multiTargetState, setMultiTargetState] = React.useState(null);
             const [postChoiceAction, setPostChoiceAction] = React.useState(null);
             const [isHandExpanded, setIsHandExpanded] = React.useState(false);
+            const [isRulesVisible, setIsRulesVisible] = React.useState(false);
 
             const [isMobile, setIsMobile] = React.useState(false);
 
@@ -2895,6 +2928,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
    
             return (
         <div className="h-screen w-full flex flex-col bg-gray-900 overflow-hidden text-sm relative">
+            {isRulesVisible && <RulesModal onClose={() => setIsRulesVisible(false)} />}
             {reorderDeckState && <ReorderDeckModal cards={reorderDeckState} onConfirm={(orderedCards) => {
                 setP2Deck(prev => [...orderedCards, ...prev.slice(orderedCards.length)]);
                 setReorderDeckState(null);
@@ -2962,6 +2996,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                             {!selectedCard && !isTargeting && (
                                 <>
                                     <button onClick={() => setIsLogVisible(true)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">Registro</button>
+                                    <button onClick={() => setIsRulesVisible(true)} className="w-8 h-8 flex items-center justify-center border border-gray-500 rounded-full text-gray-300 hover:bg-gray-800 hover:text-white text-lg font-bold transition">?</button>
                                     <button onClick={() => endTurn(1)} className="px-3 py-1 border border-gray-500 rounded text-gray-300 hover:bg-gray-800 hover:text-white text-sm transition">PASSA</button>
                                 </>
                             )}
