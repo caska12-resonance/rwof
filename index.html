@@ -559,7 +559,7 @@
             { name: "Titano di Quarzo", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE_HEXPROOF_SPELLS', val: 0, desc: "Miraggio. Non può essere distrutto da Incantesimi." },
             { name: "Cronomas, il Reggente", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'STASIS_STRONGEST', val: 0, desc: "Quando entra in campo, metti in Stasi la creatura nemica con Forza più alta." },
             { name: "Paradosso Vivente", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SWAP_TOTAL_STRENGTH', val: 0, desc: "Quando entra in campo, applica la differenza di Forza totale tra i giocatori come bonus/malus temporaneo a una creatura per lato." },
-            { name: "Custode del Velo", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'PROTECT_MIRAGE_ONCE', val: 0, desc: "Una volta per partita, quando un tuo Miraggio verrebbe distrutto da un effetto bersagliato, invece non viene distrutto." },
+            { name: "Custode del Velo", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SACRIFICE_SELF_TO_SAVE_MIRAGE', val: 0, desc: "Se un tuo Miraggio sta per essere distrutto, puoi distruggere questa carta invece del Miraggio." },
             { name: "Eclissi Temporale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'STASIS_AND_DRAW', val: 0, desc: "Metti in Stasi una creatura nemica. Pesca una carta." },
             { name: "Portale dell’Oblio", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'EXILE_CREATURE', val: 0, desc: "Rimuovi dal gioco una creatura nemica." },
             { name: "Anomalia Dimensionale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'SWAP_BASE_STRENGTH', val: 0, desc: "Scambia la Forza base di due creature in campo." },
@@ -636,7 +636,7 @@
             MIRAGE_HEXPROOF_SPELLS: 'MIRAGE_HEXPROOF_SPELLS',
             STASIS_STRONGEST: 'STASIS_STRONGEST',
             SWAP_TOTAL_STRENGTH: 'SWAP_TOTAL_STRENGTH',
-            PROTECT_MIRAGE_ONCE: 'PROTECT_MIRAGE_ONCE',
+            SACRIFICE_SELF_TO_SAVE_MIRAGE: 'SACRIFICE_SELF_TO_SAVE_MIRAGE',
             STASIS_AND_DRAW: 'STASIS_AND_DRAW',
             EXILE_CREATURE: 'EXILE_CREATURE',
             SWAP_BASE_STRENGTH: 'SWAP_BASE_STRENGTH',
@@ -1122,7 +1122,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [protection, setProtection] = React.useState({ p1_ally: null, p1_all: false, p2_ally: null, p2_all: false });   
             const [graveyardViewer, setGraveyardViewer] = React.useState(null);
             const [lastSpellTurn, setLastSpellTurn] = React.useState({ p1: -1, p2: -1 });
-            const [protectMirage, setProtectMirage] = React.useState({ p1: true, p2: true });
             const [effectQueue, setEffectQueue] = React.useState([]);
             const [isLogVisible, setIsLogVisible] = React.useState(false);
             const [zoomedCard, setZoomedCard] = React.useState(null);
@@ -1218,7 +1217,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setP2VP(0);
                 setClaimedThresholds({ 10: null, 15: null, 20: null, 30: null });
                 setLogs([]); 
-                setProtectMirage({ p1: true, p2: true });
                 
                 // Coin toss to decide who goes first
                 const firstPlayer = window.startingPlayerOverride || Math.floor(Math.random() * 2) + 1;
@@ -1696,26 +1694,63 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setTimeout(() => {
                     resolveEffect(playedCard, finalTarget, 2);
 
-                    const playerField = p1FieldRef.current;
-                    const mirageCreatures = playerField.filter(c =>
-                        [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(c.effect) || c.isMirage
-                    );
+                    // A timeout to ensure state updates before checking
+                    setTimeout(() => {
+                        const playerField = p1FieldRef.current;
+                        const mirageCreatures = playerField.filter(c =>
+                            [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(c.effect) || c.isMirage
+                        );
+                        const veilkeepers = playerField.filter(c => c.effect === EFFECTS.SACRIFICE_SELF_TO_SAVE_MIRAGE);
 
-                    if (playedCard.strength >= 3 && mirageCreatures.length > 0) {
-                        addLog(`La mossa del nemico minaccia i tuoi Miraggi!`);
-                        setChoiceState({
-                            title: "Scegli un tuo Miraggio da distruggere",
-                            options: mirageCreatures,
-                            callback: (mirageToDestroy) => {
-                                killCreature(mirageToDestroy, 1);
-                                addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
-                                setChoiceState(null);
-                                setPostChoiceAction('END_AI_TURN');
+                        if (playedCard.strength >= 3 && mirageCreatures.length > 0) {
+                            if (veilkeepers.length > 0) {
+                                setChoiceState({
+                                    title: "Un tuo Miraggio sta per essere distrutto!",
+                                    options: [],
+                                    actions: [
+                                        {
+                                            label: `Sacrifica ${veilkeepers[0].name}`,
+                                            callback: () => {
+                                                addLog(`Hai sacrificato ${veilkeepers[0].name} per salvare i tuoi Miraggi!`);
+                                                killCreature(veilkeepers[0], 1, true);
+                                                setChoiceState(null);
+                                                endTurn(2);
+                                            }
+                                        },
+                                        {
+                                            label: "Non sacrificare",
+                                            callback: () => {
+                                                setChoiceState({
+                                                    title: "Scegli un tuo Miraggio da distruggere",
+                                                    options: mirageCreatures,
+                                                    callback: (mirageToDestroy) => {
+                                                        killCreature(mirageToDestroy, 1, false, playedCard);
+                                                        addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                                                        setChoiceState(null);
+                                                        setPostChoiceAction('END_AI_TURN');
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    ]
+                                });
+                            } else {
+                                addLog(`La mossa del nemico minaccia i tuoi Miraggi!`);
+                                setChoiceState({
+                                    title: "Scegli un tuo Miraggio da distruggere",
+                                    options: mirageCreatures,
+                                    callback: (mirageToDestroy) => {
+                                        killCreature(mirageToDestroy, 1, false, playedCard);
+                                        addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                                        setChoiceState(null);
+                                        setPostChoiceAction('END_AI_TURN');
+                                    }
+                                });
                             }
-                        });
-                    } else {
-                        endTurn(2);
-                    }
+                        } else {
+                            endTurn(2);
+                        }
+                    }, 50); // Small delay to wait for state update
                 }, 800);
             };   
 
@@ -1850,16 +1885,31 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             }
 
             const handleMirageOnPlay = (playedCard) => {
-                const enemyMirageCreatures = p2FieldRef.current.filter(c =>
+                const enemyField = p2FieldRef.current;
+                const enemyMirageCreatures = enemyField.filter(c =>
                     [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(c.effect) || c.isMirage
                 );
+                const enemyVeilkeepers = enemyField.filter(c => c.effect === EFFECTS.SACRIFICE_SELF_TO_SAVE_MIRAGE);
 
                 if (playedCard.strength >= 3 && enemyMirageCreatures.length > 0) {
-                    addLog(`La tua mossa minaccia i Miraggi nemici!`);
-                    // AI simple logic: destroy the weakest mirage
                     const mirageToDestroy = enemyMirageCreatures.sort((a, b) => getEffectiveStrength(a) - getEffectiveStrength(b))[0];
-                    killCreature(mirageToDestroy, 2);
-                    addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+
+                    if (enemyVeilkeepers.length > 0) {
+                        const keeper = enemyVeilkeepers[0];
+                        // AI Logic: Sacrifice keeper only if the mirage is stronger
+                        if (getEffectiveStrength(mirageToDestroy) > getEffectiveStrength(keeper)) {
+                            addLog(`L'IA sacrifica ${keeper.name} per salvare ${mirageToDestroy.name}!`);
+                            killCreature(keeper, 2, true);
+                        } else {
+                            addLog(`La tua mossa minaccia i Miraggi nemici!`);
+                            killCreature(mirageToDestroy, 2, false, playedCard);
+                            addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                        }
+                    } else {
+                        addLog(`La tua mossa minaccia i Miraggi nemici!`);
+                        killCreature(mirageToDestroy, 2, false, playedCard);
+                        addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                    }
                 }
             };
 
