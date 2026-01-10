@@ -986,9 +986,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             <h2 className="text-2xl font-fantasy text-yellow-400 mb-4 text-center">{title || "Scegli un'opzione"}</h2>
             <div className="flex flex-wrap gap-4 mb-4 justify-center max-h-[60vh] overflow-y-auto p-2">
                 {options.map(opt => (
-                    <div key={opt.uid} onClick={() => handleCardClick(opt)} className="cursor-pointer">
-                        <Card card={opt} onClick={() => handleCardClick(opt)} />
-                    </div>
+                    <Card key={opt.uid} card={opt} onClick={handleCardClick} />
                 ))}
             </div>
             {actions && actions.length > 0 && (
@@ -1414,6 +1412,8 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     offset: { x: 0, y: 0 }
                 });
             };
+
+            if (gameState === 'MENU') return <StartScreen onStart={startGame} />;
 
             React.useEffect(() => {
                 if (dragState.isDragging) {
