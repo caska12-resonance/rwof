@@ -1708,16 +1708,9 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                             title: "Scegli un tuo Miraggio da distruggere",
                             options: mirageCreatures,
                             callback: (mirageToDestroy) => {
-                                const guardians = p1FieldRef.current.filter(c => c.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE);
-                                const willBeIntercepted = guardians.length > 0;
-
+                                // Chiama killCreature, che ora gestirà l'apertura del secondo modale se necessario.
+                                // Non chiudiamo lo stato della scelta qui per evitare race conditions.
                                 killCreature(mirageToDestroy, 1, false, playedCard);
-                                setChoiceState(null);
-
-                                if (!willBeIntercepted) {
-                                    addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
-                                    setPostChoiceAction('END_AI_TURN');
-                                }
                             }
                         });
                     } else {
@@ -1863,10 +1856,9 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
 
                 if (playedCard.strength >= 3 && enemyMirageCreatures.length > 0) {
                     addLog(`La tua mossa minaccia i Miraggi nemici!`);
-                    // AI simple logic: destroy the weakest mirage
                     const mirageToDestroy = enemyMirageCreatures.sort((a, b) => getEffectiveStrength(a) - getEffectiveStrength(b))[0];
-                    killCreature(mirageToDestroy, 2);
-                    addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                    // Chiamata corretta a killCreature. La logica del Custode per l'IA è gestita all'interno.
+                    killCreature(mirageToDestroy, 2, false, playedCard);
                 }
             };
 
