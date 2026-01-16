@@ -1708,9 +1708,19 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                             title: "Scegli un tuo Miraggio da distruggere",
                             options: mirageCreatures,
                             callback: (mirageToDestroy) => {
-                                // Chiama killCreature, che ora gestirà l'apertura del secondo modale se necessario.
-                                // Non chiudiamo lo stato della scelta qui per evitare race conditions.
-                                killCreature(mirageToDestroy, 1, false, playedCard);
+                                const guardians = p1FieldRef.current.filter(c => c.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE);
+                                // Se non ci sono guardiani, il secondo modale non si aprirà.
+                                // Dobbiamo gestire la fine del turno qui.
+                                if (guardians.length === 0) {
+                                    killCreature(mirageToDestroy, 1, false, playedCard, true); // Bypass per sicurezza
+                                    addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                                    setChoiceState(null);
+                                    setPostChoiceAction('END_AI_TURN');
+                                } else {
+                                    // Se ci sono guardiani, killCreature aprirà il secondo modale,
+                                    // il cui callback gestirà la fine del turno.
+                                    killCreature(mirageToDestroy, 1, false, playedCard);
+                                }
                             }
                         });
                     } else {
