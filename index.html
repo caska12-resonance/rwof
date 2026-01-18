@@ -1148,7 +1148,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 window.addEventListener('resize', checkIsMobile);
                 return () => window.removeEventListener('resize', checkIsMobile);
             }, []);
-   
+
             const p2HandRef = React.useRef([]);   
             const p1FieldRef = React.useRef([]);   
             const p1GraveRef = React.useRef([]);   
@@ -1177,7 +1177,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setEnemyFaction(randomEnemy);
 
                 let d1 = createFullDeck(getBaseDeck(chosenFaction), chosenFaction);
-                const d2 = createFullDeck(getBaseDeck(randomEnemy), randomEnemy);
+                let d2 = createFullDeck(getBaseDeck(randomEnemy), randomEnemy);
                 
                 // Initial hands
                 let h1, h2;
@@ -1191,7 +1191,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     h1 = d1.splice(0, 5);
                 }
 
-                h2 = d2.splice(0, 5); // AI hand can remain random
+                if (window.p2HandOverride) {
+                    h2 = window.p2HandOverride;
+                    const handUids = new Set(h2.map(c => c.uid));
+                    d2 = d2.filter(c => !handUids.has(c.uid));
+                    window.p2HandOverride = null;
+                } else {
+                    h2 = d2.splice(0, 5); // AI hand can remain random
+                }
 
                 // Reset game state
                 setP1Deck(d1); setP1Hand(h1);
@@ -1475,17 +1482,20 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const startTurn = (pid) => {
                 if (gameState === 'GAME_OVER') return;
 
-                // Clear stasis at the start of the turn
-                const myFieldSetter = pid === 1 ? setP1Field : setP2Field;
+                // Clear stasis at the start of the caster's next turn
                 let stasisCleared = false;
-                myFieldSetter(prev => prev.map(c => {
-                    if (c.isStasis) {
+                const clearStasis = (field) => field.map(c => {
+                    if (c.isStasis && c.stasisBy === pid) {
                         stasisCleared = true;
-                        const { isStasis, ...rest } = c;
+                        const { isStasis, stasisBy, ...rest } = c;
                         return rest;
                     }
                     return c;
-                }));
+                });
+
+                setP1Field(prev => clearStasis(prev));
+                setP2Field(prev => clearStasis(prev));
+
                 if (stasisCleared) {
                     addLog(`Le creature si risvegliano dalla Stasi!`);
                 }
@@ -2612,14 +2622,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true, stasisBy: pid } : c));
                             msg += `${target.name} è in stasi!`;
                         }
                         break;
                     case EFFECTS.STASIS_STRONGEST:
                         const strongestEnemy = [...enemyField].sort((a, b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
                         if (strongestEnemy) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true, stasisBy: pid } : c));
                             msg += `${strongestEnemy.name} è in stasi!`;
                         } else {
                             msg += "Nessun nemico da mettere in stasi.";
@@ -2627,7 +2637,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS_AND_DRAW:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true, stasisBy: pid } : c));
                             msg += `${target.name} è in stasi!`;
                             drawCards(pid, 1);
                             msg += ` Pesca una carta.`;
