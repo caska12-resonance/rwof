@@ -788,7 +788,7 @@
         };   
    
         const getEffectiveStrength = (card) => {   
-            if (card.isStasis) return 0;
+            if (card.stasis) return 0;
             if (card.isFrozen) return card.currentStrength;
             return Math.max(0, (card.currentStrength || 0) + (card.tempStrength || 0));   
         }   
@@ -947,7 +947,7 @@
             </div>
 
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2 text-4xl z-10 pointer-events-none">
-                {card.isStasis && <span title="Stasi">❄️</span>}
+                {card.stasis && <span title="Stasi">❄️</span>}
                 {card.isIndestructible && <span title="Indistruttibile">🛡️</span>}
             </div>
             
@@ -1499,19 +1499,18 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const startTurn = (pid) => {
                 if (gameState === 'GAME_OVER') return;
 
-                // Clear stasis at the start of the turn
-                const myFieldSetter = pid === 1 ? setP1Field : setP2Field;
-                let stasisCleared = false;
-                myFieldSetter(prev => prev.map(c => {
-                    if (c.isStasis) {
-                        stasisCleared = true;
-                        const { isStasis, ...rest } = c;
-                        return rest;
-                    }
-                    return c;
-                }));
-                if (stasisCleared) {
-                    addLog(`Le creature si risvegliano dalla Stasi!`);
+                const activePlayerId = pid === 1 ? 'p1' : 'p2';
+
+                const p1WillHaveRemovals = p1FieldRef.current.some(c => c.stasis === activePlayerId);
+                const p2WillHaveRemovals = p2FieldRef.current.some(c => c.stasis === activePlayerId);
+                const stasisWasRemoved = p1WillHaveRemovals || p2WillHaveRemovals;
+
+                // Clear stasis at the start of the turn ONLY if the current player is the one who applied it
+                setP1Field(prev => prev.map(c => c.stasis === activePlayerId ? { ...c, stasis: null } : c));
+                setP2Field(prev => prev.map(c => c.stasis === activePlayerId ? { ...c, stasis: null } : c));
+
+                if (stasisWasRemoved) {
+                    addLog(`Una nuova fase inizia. Stasi applicata da ${activePlayerId} viene rimossa.`);
                 }
 
                 const roundNumber = Math.floor(turnCount / 2) + 1;
@@ -2608,14 +2607,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
                             msg += `${target.name} è in stasi!`;
                         }
                         break;
                     case EFFECTS.STASIS_STRONGEST:
                         const strongestEnemy = [...enemyField].sort((a, b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
                         if (strongestEnemy) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
                             msg += `${strongestEnemy.name} è in stasi!`;
                         } else {
                             msg += "Nessun nemico da mettere in stasi.";
@@ -2623,7 +2622,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS_AND_DRAW:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
                             msg += `${target.name} è in stasi!`;
                             drawCards(pid, 1);
                             msg += ` Pesca una carta.`;
