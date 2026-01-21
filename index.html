@@ -152,53 +152,54 @@
             border-width: 2px;  
         }  
   
-        .card-name {  
-            position: absolute;  
-            top: 5px;  
-            left: 42px;  
-            right: 5px;  
-            z-index: 3;  
-            text-align: left;  
-            font-size: 13px;  
-            font-weight: 700;  
-            line-height: 1.1;  
-            text-shadow: 0 2px 4px #000;  
-        }  
-  
-        .card-name span {  
-            font-size: 11px;  
-            font-weight: 500;  
-        }  
-  
-        .card-ability {  
-            position: absolute;  
-            bottom: 28px;  
-            left: 0;  
-            right: 0;  
-            z-index: 3;  
-            padding: 5px 7px;  
-            background: rgba(0,0,0,0.7);  
-            font-size: 10px;  
-            line-height: 1.2;  
-            backdrop-filter: blur(2px);  
-            border-top: 1px solid rgba(255,255,255,0.1);  
-            border-bottom: 1px solid rgba(255,255,255,0.05);  
-            height: 48px;  
-            overflow-y: auto;  
-        }  
-  
-        .card-rarity {  
-            position: absolute;  
-            bottom: 4px;  
-            width: 100%;  
-            z-index: 3;  
-            letter-spacing: 1px;  
-            font-size: 11px;  
-            font-weight: 700;  
-            text-shadow: 0 1px 3px #000;  
-            display: flex;  
-            align-items: center;  
-            justify-content: center;  
+        .card-name {
+            position: absolute;
+            top: 5px;
+            left: 42px;
+            right: 5px;
+            z-index: 3;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.1;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1);
+        }
+
+        .card-name span {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .card-ability {
+            position: absolute;
+            bottom: 28px;
+            left: 0;
+            right: 0;
+            z-index: 3;
+            padding: 5px 7px;
+            background: rgba(0,0,0,0.7);
+            font-size: 10px;
+            line-height: 1.2;
+            backdrop-filter: blur(2px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            height: 48px;
+            overflow-y: auto;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        }
+
+        .card-rarity {
+            position: absolute;
+            bottom: 4px;
+            width: 100%;
+            z-index: 3;
+            letter-spacing: 1px;
+            font-size: 11px;
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }  
   
         .rarity-common { border-color: #a1a1aa; }  
@@ -321,6 +322,25 @@
         }
         .zoomed-card-container:active {
             cursor: grabbing;
+        }
+
+        .active-turn-player {
+            box-shadow: inset 0 0 25px rgba(251, 191, 36, 0.5), 0 0 15px rgba(251, 191, 36, 0.3);
+            border-color: rgba(251, 191, 36, 0.7) !important;
+        }
+        .active-turn-opponent {
+            box-shadow: inset 0 0 25px rgba(239, 68, 68, 0.4), 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+
+        .card [title="Stasi"] {
+            font-size: 5rem;
+            opacity: 0.7;
+            text-shadow: 0 0 15px #38bdf8, 0 0 25px #38bdf8;
+        }
+        .card [title="Indistruttibile"] {
+            font-size: 3rem;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.7));
         }
 
         /* Responsive Styles for Mobile */
@@ -559,7 +579,7 @@
             { name: "Titano di Quarzo", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE_HEXPROOF_SPELLS', val: 0, desc: "Miraggio. Non può essere distrutto da Incantesimi." },
             { name: "Cronomas, il Reggente", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'STASIS_STRONGEST', val: 0, desc: "Quando entra in campo, metti in Stasi la creatura nemica con Forza più alta." },
             { name: "Paradosso Vivente", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SWAP_TOTAL_STRENGTH', val: 0, desc: "Quando entra in campo, applica la differenza di Forza totale tra i giocatori come bonus/malus temporaneo a una creatura per lato." },
-            { name: "Custode del Velo", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SACRIFICE_TO_PROTECT_MIRAGE', val: 0, desc: "Se un tuo Miraggio sta per essere distrutto, puoi scegliere di distruggere questa carta invece del Miraggio." },
+            { name: "Custode del Velo", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'PROTECT_MIRAGE_ONCE', val: 0, desc: "Una volta per partita, quando un tuo Miraggio verrebbe distrutto da un effetto bersagliato, invece non viene distrutto." },
             { name: "Eclissi Temporale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'STASIS_AND_DRAW', val: 0, desc: "Metti in Stasi una creatura nemica. Pesca una carta." },
             { name: "Portale dell’Oblio", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'EXILE_CREATURE', val: 0, desc: "Rimuovi dal gioco una creatura nemica." },
             { name: "Anomalia Dimensionale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'SWAP_BASE_STRENGTH', val: 0, desc: "Scambia la Forza base di due creature in campo." },
@@ -603,7 +623,8 @@
         const WIN_SCORE = 3;
         const THRESHOLDS = [
             { val: 10, pts: 1, label: "10" },
-            { val: 20, pts: 2, label: "20" },
+            { val: 15, pts: 1, label: "15" },
+            { val: 20, pts: 1, label: "20" },
             { val: 30, pts: 2, label: "30" }
         ];   
    
@@ -636,7 +657,6 @@
             STASIS_STRONGEST: 'STASIS_STRONGEST',
             SWAP_TOTAL_STRENGTH: 'SWAP_TOTAL_STRENGTH',
             PROTECT_MIRAGE_ONCE: 'PROTECT_MIRAGE_ONCE',
-            SACRIFICE_TO_PROTECT_MIRAGE: 'SACRIFICE_TO_PROTECT_MIRAGE',
             STASIS_AND_DRAW: 'STASIS_AND_DRAW',
             EXILE_CREATURE: 'EXILE_CREATURE',
             SWAP_BASE_STRENGTH: 'SWAP_BASE_STRENGTH',
@@ -925,6 +945,11 @@
             <div className="card-ability scrollbar-hide">
                 {card.desc}
             </div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2 text-4xl z-10 pointer-events-none">
+                {card.isStasis && <span title="Stasi">❄️</span>}
+                {card.isIndestructible && <span title="Indistruttibile">🛡️</span>}
+            </div>
             
             <div className={`card-rarity text-rarity-${card.rarity}`}>
                 {card.type === CARD_TYPES.CREATURE ? '⚔️' : '✨'}&nbsp;
@@ -1176,7 +1201,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setEnemyFaction(randomEnemy);
 
                 let d1 = createFullDeck(getBaseDeck(chosenFaction), chosenFaction);
-                let d2 = createFullDeck(getBaseDeck(randomEnemy), randomEnemy);
+                const d2 = createFullDeck(getBaseDeck(randomEnemy), randomEnemy);
                 
                 // Initial hands
                 let h1, h2;
@@ -1190,14 +1215,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     h1 = d1.splice(0, 5);
                 }
 
-                if (window.p2HandOverride) {
-                    h2 = window.p2HandOverride;
-                    const handUids = new Set(h2.map(c => c.uid));
-                    d2 = d2.filter(c => !handUids.has(c.uid));
-                    window.p2HandOverride = null;
-                } else {
-                    h2 = d2.splice(0, 5); // AI hand can remain random
-                }
+                h2 = d2.splice(0, 5); // AI hand can remain random
 
                 // Reset game state
                 setP1Deck(d1); setP1Hand(h1);
@@ -1481,20 +1499,17 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const startTurn = (pid) => {
                 if (gameState === 'GAME_OVER') return;
 
-                // Clear stasis at the start of the caster's next turn
+                // Clear stasis at the start of the turn
+                const myFieldSetter = pid === 1 ? setP1Field : setP2Field;
                 let stasisCleared = false;
-                const clearStasis = (field) => field.map(c => {
-                    if (c.isStasis && c.stasisBy === pid) {
+                myFieldSetter(prev => prev.map(c => {
+                    if (c.isStasis) {
                         stasisCleared = true;
-                        const { isStasis, stasisBy, ...rest } = c;
+                        const { isStasis, ...rest } = c;
                         return rest;
                     }
                     return c;
-                });
-
-                setP1Field(prev => clearStasis(prev));
-                setP2Field(prev => clearStasis(prev));
-
+                }));
                 if (stasisCleared) {
                     addLog(`Le creature si risvegliano dalla Stasi!`);
                 }
@@ -1717,19 +1732,10 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                             title: "Scegli un tuo Miraggio da distruggere",
                             options: mirageCreatures,
                             callback: (mirageToDestroy) => {
-                                const guardians = p1FieldRef.current.filter(c => c.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE);
-                                // Se non ci sono guardiani, il secondo modale non si aprirà.
-                                // Dobbiamo gestire la fine del turno qui.
-                                if (guardians.length === 0) {
-                                    killCreature(mirageToDestroy, 1, false, playedCard, true); // Bypass per sicurezza
-                                    addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
-                                    setChoiceState(null);
-                                    setPostChoiceAction('END_AI_TURN');
-                                } else {
-                                    // Se ci sono guardiani, killCreature aprirà il secondo modale,
-                                    // il cui callback gestirà la fine del turno.
-                                    killCreature(mirageToDestroy, 1, false, playedCard);
-                                }
+                                killCreature(mirageToDestroy, 1);
+                                addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                                setChoiceState(null);
+                                setPostChoiceAction('END_AI_TURN');
                             }
                         });
                     } else {
@@ -1875,9 +1881,10 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
 
                 if (playedCard.strength >= 3 && enemyMirageCreatures.length > 0) {
                     addLog(`La tua mossa minaccia i Miraggi nemici!`);
+                    // AI simple logic: destroy the weakest mirage
                     const mirageToDestroy = enemyMirageCreatures.sort((a, b) => getEffectiveStrength(a) - getEffectiveStrength(b))[0];
-                    // Chiamata corretta a killCreature. La logica del Custode per l'IA è gestita all'interno.
-                    killCreature(mirageToDestroy, 2, false, playedCard);
+                    killCreature(mirageToDestroy, 2);
+                    addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
                 }
             };
 
@@ -2066,47 +2073,27 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 }
             };
             
-            const killCreature = (creatureToKill, ownerPid, isSacrifice = false, source = null, bypassGuardian = false) => {
+            const killCreature = (creatureToKill, ownerPid, isSacrifice = false, source = null) => {
                 const myFieldSetter = ownerPid === 1 ? setP1Field : setP2Field;
                 const myGraveSetter = ownerPid === 1 ? setP1Grave : setP2Grave;
                 const myHandSetter = ownerPid === 1 ? setP1Hand : setP2Hand;
-                const myFieldRef = ownerPid === 1 ? p1FieldRef : p2FieldRef;
 
-                // RIPRISTINO: Controlla l'immunità PRIMA di qualsiasi altra logica
                 if (source && source.type === CARD_TYPES.SPELL && creatureToKill.effect === EFFECTS.MIRAGE_HEXPROOF_SPELLS) {
                     addLog(`${creatureToKill.name} è immune agli incantesimi!`);
                     return;
                 }
 
                 const isMirage = creatureToKill.isMirage || [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(creatureToKill.effect);
-                const guardians = myFieldRef.current.filter(c => c.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE);
+                const canProtect = ownerPid === 1 ? protectMirage.p1 : protectMirage.p2;
 
-                if (isMirage && guardians.length > 0 && !bypassGuardian) {
-                    const allOptions = [...guardians, creatureToKill];
-                    if (ownerPid === 1) { // Player's turn
-                        setChoiceState({
-                            title: `Un tuo Miraggio sta per essere distrutto!`,
-                            options: allOptions,
-                            callback: (choice) => {
-                                if (choice.uid === creatureToKill.uid) {
-                                    addLog(`Hai scelto di non sacrificare il Custode. ${creatureToKill.name} viene distrutto.`);
-                                    killCreature(creatureToKill, ownerPid, isSacrifice, source, true);
-                                } else {
-                                    addLog(`Sacrifichi ${choice.name} per salvare ${creatureToKill.name}.`);
-                                    killCreature(choice, ownerPid, true, source, true);
-                                }
-                                setChoiceState(null);
-                                if (gameState === 'AI_TURN') {
-                                    setPostChoiceAction('END_AI_TURN');
-                                }
-                            }
-                        });
-                    } else { // AI's turn
-                        const guardianToSacrifice = guardians[0];
-                        addLog(`L'IA sacrifica ${guardianToSacrifice.name} per salvare ${creatureToKill.name}.`);
-                        killCreature(guardianToSacrifice, ownerPid, true, source, true);
+                if (isMirage && canProtect && source && needsTarget(source)) {
+                    addLog(`Il Custode del Velo protegge ${creatureToKill.name}!`);
+                    if (ownerPid === 1) {
+                        setProtectMirage(prev => ({ ...prev, p1: false }));
+                    } else {
+                        setProtectMirage(prev => ({ ...prev, p2: false }));
                     }
-                    return; // Stop the original kill process
+                    return;
                 }
 
                 // Remove from field and apply triggers to remaining allies in one go.
@@ -2621,14 +2608,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true, stasisBy: pid } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
                             msg += `${target.name} è in stasi!`;
                         }
                         break;
                     case EFFECTS.STASIS_STRONGEST:
                         const strongestEnemy = [...enemyField].sort((a, b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
                         if (strongestEnemy) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true, stasisBy: pid } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true } : c));
                             msg += `${strongestEnemy.name} è in stasi!`;
                         } else {
                             msg += "Nessun nemico da mettere in stasi.";
@@ -2636,7 +2623,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS_AND_DRAW:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true, stasisBy: pid } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
                             msg += `${target.name} è in stasi!`;
                             drawCards(pid, 1);
                             msg += ` Pesca una carta.`;
@@ -2993,7 +2980,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             <ChoiceModal choiceState={choiceState} onChoice={handleChoice} />
             
             {/* ENEMY AREA */}
-            <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 border-yellow-700/50 min-h-0`}>
+            <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 border-yellow-700/50 min-h-0 ${gameState === 'AI_TURN' ? 'active-turn-opponent' : ''}`}>
                 <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
                     <span className="font-bold font-fantasy text-base text-gray-400">Nemico: {p2Hand.length} carte</span>
                     <div className="flex gap-4 items-center">
@@ -3050,7 +3037,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             </div>
 
             {/* PLAYER AREA */}
-            <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700/50 min-h-0`}>
+            <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700/50 min-h-0 ${gameState === 'PLAYER_TURN' ? 'active-turn-player' : ''}`}>
                 <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
                     <span className={`font-bold font-fantasy text-base ${playerFaction === FACTIONS.HUMAN ? 'text-blue-400' : playerFaction === FACTIONS.UNDEAD ? 'text-purple-400' : 'text-green-400'}`}>
                         {playerFaction.toUpperCase()}
