@@ -579,7 +579,7 @@
             { name: "Titano di Quarzo", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE_HEXPROOF_SPELLS', val: 0, desc: "Miraggio. Non può essere distrutto da Incantesimi." },
             { name: "Cronomas, il Reggente", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'STASIS_STRONGEST', val: 0, desc: "Quando entra in campo, metti in Stasi la creatura nemica con Forza più alta." },
             { name: "Paradosso Vivente", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SWAP_TOTAL_STRENGTH', val: 0, desc: "Quando entra in campo, applica la differenza di Forza totale tra i giocatori come bonus/malus temporaneo a una creatura per lato." },
-            { name: "Custode del Velo", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'PROTECT_MIRAGE_ONCE', val: 0, desc: "Una volta per partita, quando un tuo Miraggio verrebbe distrutto da un effetto bersagliato, invece non viene distrutto." },
+            { name: "Custode del Velo", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SACRIFICE_TO_PROTECT_MIRAGE', val: 0, desc: "Se un tuo Miraggio sta per essere distrutto, puoi scegliere di distruggere questa carta invece del Miraggio." },
             { name: "Eclissi Temporale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'STASIS_AND_DRAW', val: 0, desc: "Metti in Stasi una creatura nemica. Pesca una carta." },
             { name: "Portale dell’Oblio", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'EXILE_CREATURE', val: 0, desc: "Rimuovi dal gioco una creatura nemica." },
             { name: "Anomalia Dimensionale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'SWAP_BASE_STRENGTH', val: 0, desc: "Scambia la Forza base di due creature in campo." },
@@ -656,7 +656,7 @@
             MIRAGE_HEXPROOF_SPELLS: 'MIRAGE_HEXPROOF_SPELLS',
             STASIS_STRONGEST: 'STASIS_STRONGEST',
             SWAP_TOTAL_STRENGTH: 'SWAP_TOTAL_STRENGTH',
-            PROTECT_MIRAGE_ONCE: 'PROTECT_MIRAGE_ONCE',
+            SACRIFICE_TO_PROTECT_MIRAGE: 'SACRIFICE_TO_PROTECT_MIRAGE',
             STASIS_AND_DRAW: 'STASIS_AND_DRAW',
             EXILE_CREATURE: 'EXILE_CREATURE',
             SWAP_BASE_STRENGTH: 'SWAP_BASE_STRENGTH',
@@ -1147,7 +1147,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [protection, setProtection] = React.useState({ p1_ally: null, p1_all: false, p2_ally: null, p2_all: false });   
             const [graveyardViewer, setGraveyardViewer] = React.useState(null);
             const [lastSpellTurn, setLastSpellTurn] = React.useState({ p1: -1, p2: -1 });
-            const [protectMirage, setProtectMirage] = React.useState({ p1: true, p2: true });
             const [effectQueue, setEffectQueue] = React.useState([]);
             const [isLogVisible, setIsLogVisible] = React.useState(false);
             const [zoomedCard, setZoomedCard] = React.useState(null);
@@ -1243,7 +1242,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setP2VP(0);
                 setClaimedThresholds({ 10: null, 15: null, 20: null, 30: null });
                 setLogs([]); 
-                setProtectMirage({ p1: true, p2: true });
                 
                 // Coin toss to decide who goes first
                 const firstPlayer = window.startingPlayerOverride || Math.floor(Math.random() * 2) + 1;
@@ -2082,17 +2080,39 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     return;
                 }
 
+                const myField = ownerPid === 1 ? p1FieldRef.current : p2FieldRef.current;
                 const isMirage = creatureToKill.isMirage || [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(creatureToKill.effect);
-                const canProtect = ownerPid === 1 ? protectMirage.p1 : protectMirage.p2;
+                const protector = myField.find(c => c.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE);
 
-                if (isMirage && canProtect && source && needsTarget(source)) {
-                    addLog(`Il Custode del Velo protegge ${creatureToKill.name}!`);
-                    if (ownerPid === 1) {
-                        setProtectMirage(prev => ({ ...prev, p1: false }));
-                    } else {
-                        setProtectMirage(prev => ({ ...prev, p2: false }));
+                if (isMirage && protector && !isSacrifice) {
+                    if (ownerPid === 1) { // Player's turn
+                        setChoiceState({
+                            title: `Salvare ${creatureToKill.name}?`,
+                            options: [],
+                            actions: [
+                                { label: `Sì (Sacrifica ${protector.name})`, callback: () => {
+                                    addLog(`${protector.name} si sacrifica per salvare ${creatureToKill.name}!`);
+                                    killCreature(protector, ownerPid, true);
+                                    setChoiceState(null);
+                                }},
+                                { label: "No", callback: () => {
+                                    addLog(`${creatureToKill.name} non viene salvato.`);
+                                    setChoiceState(null);
+                                    killCreature(creatureToKill, ownerPid, false, source);
+                                }}
+                            ]
+                        });
+                        return; // Stop execution to wait for player choice
+                    } else { // AI's turn
+                        if (getEffectiveStrength(creatureToKill) > getEffectiveStrength(protector)) {
+                            addLog(`${protector.name} si sacrifica per salvare ${creatureToKill.name}!`);
+                            killCreature(protector, ownerPid, true);
+                            return; // The protector is sacrificed, the mirage is saved.
+                        } else {
+                            addLog(`${protector.name} non si sacrifica per ${creatureToKill.name}.`);
+                            // Proceed to kill the original mirage
+                        }
                     }
-                    return;
                 }
 
                 // Remove from field and apply triggers to remaining allies in one go.
