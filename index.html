@@ -623,10 +623,9 @@
         const WIN_SCORE = 3;
         const THRESHOLDS = [
             { val: 10, pts: 1, label: "10" },
-            { val: 15, pts: 1, label: "15" },
-            { val: 20, pts: 1, label: "20" },
+            { val: 20, pts: 2, label: "20" },
             { val: 30, pts: 2, label: "30" }
-        ];   
+        ];
    
         const EFFECTS = {   
             NONE: 'NONE',   
@@ -959,22 +958,7 @@
     );
 };
    
-        const VictoryThresholds = ({ claimedThresholds }) => (
-    <div className="victory-track">
-        {THRESHOLDS.map(t => {
-            let statusClass = "";
-            if (claimedThresholds[t.val] === 'p1') statusClass = "claimed-p1";
-            if (claimedThresholds[t.val] === 'p2') statusClass = "claimed-p2";
-            return (
-                <div key={t.val} className={`gem ${statusClass}`}>
-                    <span className="gem-label">{t.label}</span>
-                </div>
-            );
-        })}
-    </div>
-);
-
-const ScoreDisplay = ({ score, vp, faction, isPlayer }) => (
+const ScoreDisplay = React.memo(({ score, vp, faction, isPlayer, claimedThresholds }) => (
     <div className="score-display">
         <div className="flex flex-col items-center">
             <span className="text-gray-400 text-xs font-bold">FORZA</span>
@@ -985,8 +969,20 @@ const ScoreDisplay = ({ score, vp, faction, isPlayer }) => (
             <span className="text-gray-400 text-xs font-bold">VP</span>
             <span className="text-2xl font-bold font-fantasy text-yellow-400">{vp} / {WIN_SCORE}</span>
         </div>
+        <div className="victory-track">
+            {THRESHOLDS.map(t => {
+                let statusClass = "";
+                if (claimedThresholds && claimedThresholds[t.val] === 'p1') statusClass = "claimed-p1";
+                if (claimedThresholds && claimedThresholds[t.val] === 'p2') statusClass = "claimed-p2";
+                return (
+                    <div key={t.val} className={`gem ${statusClass}`}>
+                        <span className="gem-label">{t.label}</span>
+                    </div>
+                );
+            })}
+        </div>
     </div>
-);
+));
    
 const ChoiceModal = ({ choiceState, onChoice }) => {
     if (!choiceState) return null;
@@ -1276,39 +1272,42 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const p1Score = React.useMemo(() => calculateTotalStrength(p1Field, p2Field), [p1Field, p2Field]);   
             const p2Score = React.useMemo(() => calculateTotalStrength(p2Field, p1Field), [p2Field, p1Field]);   
    
-            React.useEffect(() => { if (!isEndingTurnRef.current) checkScoring(); }, [p1Score, p2Score]);
+            React.useEffect(() => {
+                if (!isEndingTurnRef.current) {
+                    checkScoring();
+                }
+            }, [p1Score, p2Score]);
    
             const checkScoring = () => {
                 const p1HasDistortion = p1Field.some(c => c.effect === EFFECTS.DISTORTION);
                 const p2HasDistortion = p2Field.some(c => c.effect === EFFECTS.DISTORTION);
 
+                let p1Gained = 0;
+                let p2Gained = 0;
+
                 setClaimedThresholds(prev => {
                     const next = { ...prev };
-                    let p1Gained = 0, p2Gained = 0, changed = false;
 
                     THRESHOLDS.forEach(t => {
-                        const p1Threshold = p1HasDistortion ? Math.max(1, t.val - 2) : t.val;
-                        const p2Threshold = p2HasDistortion ? Math.max(1, t.val - 2) : t.val;
-
                         if (next[t.val] === null) {
+                            const p1Threshold = p1HasDistortion ? Math.max(1, t.val - 2) : t.val;
+                            const p2Threshold = p2HasDistortion ? Math.max(1, t.val - 2) : t.val;
+
                             if (p1Score >= p1Threshold) {
                                 next[t.val] = 'p1';
                                 p1Gained += t.pts;
-                                changed = true;
-                                addLog(`G1 conquista soglia ${t.label} (Distorta a ${p1Threshold})! (+${t.pts} pt)`);
+                                addLog(`G1 conquista soglia ${t.label}! (+${t.pts} pt)`);
                             } else if (p2Score >= p2Threshold) {
                                 next[t.val] = 'p2';
                                 p2Gained += t.pts;
-                                changed = true;
-                                addLog(`G2 conquista soglia ${t.label} (Distorta a ${p2Threshold})! (+${t.pts} pt)`);
+                                addLog(`G2 conquista soglia ${t.label}! (+${t.pts} pt)`);
                             }
                         }
                     });
 
-                    if (changed) {
-                        if (p1Gained > 0) setP1VP(v => v + p1Gained);
-                        if (p2Gained > 0) setP2VP(v => v + p2Gained);
-                    }
+                    if (p1Gained > 0) setP1VP(v => v + p1Gained);
+                    if (p2Gained > 0) setP2VP(v => v + p2Gained);
+
                     return next;
                 });
             };
@@ -3003,8 +3002,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
                     <span className="font-bold font-fantasy text-base text-gray-400">Nemico: {p2Hand.length} carte</span>
                     <div className="flex gap-4 items-center">
-                        <VictoryThresholds claimedThresholds={claimedThresholds} />
-                        <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} />
+                        <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} claimedThresholds={claimedThresholds} />
                     </div>
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
@@ -3062,8 +3060,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         {playerFaction.toUpperCase()}
                     </span>
                     <div className="flex gap-4 items-center">
-                        <VictoryThresholds claimedThresholds={claimedThresholds} />
-                        <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} />
+                        <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} claimedThresholds={claimedThresholds} />
                     </div>
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
