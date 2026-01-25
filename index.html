@@ -162,7 +162,7 @@
             font-size: 13px;
             font-weight: 700;
             line-height: 1.1;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1);
+            text-shadow: 0 2px 4px #000;
         }
 
         .card-name span {
@@ -185,7 +185,6 @@
             border-bottom: 1px solid rgba(255,255,255,0.05);
             height: 48px;
             overflow-y: auto;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
         }
 
         .card-rarity {
@@ -196,7 +195,7 @@
             letter-spacing: 1px;
             font-size: 11px;
             font-weight: 700;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1);
+            text-shadow: 0 1px 3px #000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -322,25 +321,6 @@
         }
         .zoomed-card-container:active {
             cursor: grabbing;
-        }
-
-        .active-turn-player {
-            box-shadow: inset 0 0 25px rgba(251, 191, 36, 0.5), 0 0 15px rgba(251, 191, 36, 0.3);
-            border-color: rgba(251, 191, 36, 0.7) !important;
-        }
-        .active-turn-opponent {
-            box-shadow: inset 0 0 25px rgba(239, 68, 68, 0.4), 0 0 15px rgba(239, 68, 68, 0.2);
-        }
-
-        .card [title="Stasi"] {
-            font-size: 5rem;
-            opacity: 0.7;
-            text-shadow: 0 0 15px #38bdf8, 0 0 25px #38bdf8;
-        }
-        .card [title="Indistruttibile"] {
-            font-size: 3rem;
-            opacity: 0.8;
-            filter: drop-shadow(0 0 5px rgba(0,0,0,0.7));
         }
 
         /* Responsive Styles for Mobile */
@@ -623,7 +603,8 @@
         const WIN_SCORE = 3;
         const THRESHOLDS = [
             { val: 10, pts: 1, label: "10" },
-            { val: 20, pts: 2, label: "20" },
+            { val: 15, pts: 1, label: "15" },
+            { val: 20, pts: 1, label: "20" },
             { val: 30, pts: 2, label: "30" }
         ];
    
@@ -787,7 +768,7 @@
         };   
    
         const getEffectiveStrength = (card) => {   
-            if (card.stasis) return 0;
+            if (card.isStasis) return 0;
             if (card.isFrozen) return card.currentStrength;
             return Math.max(0, (card.currentStrength || 0) + (card.tempStrength || 0));   
         }   
@@ -944,11 +925,6 @@
             <div className="card-ability scrollbar-hide">
                 {card.desc}
             </div>
-
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2 text-4xl z-10 pointer-events-none">
-                {card.stasis && <span title="Stasi">❄️</span>}
-                {card.isIndestructible && <span title="Indistruttibile">🛡️</span>}
-            </div>
             
             <div className={`card-rarity text-rarity-${card.rarity}`}>
                 {card.type === CARD_TYPES.CREATURE ? '⚔️' : '✨'}&nbsp;
@@ -958,7 +934,22 @@
     );
 };
    
-const ScoreDisplay = React.memo(({ score, vp, faction, isPlayer, claimedThresholds }) => (
+        const VictoryThresholds = ({ claimedThresholds }) => (
+    <div className="victory-track">
+        {THRESHOLDS.map(t => {
+            let statusClass = "";
+            if (claimedThresholds[t.val] === 'p1') statusClass = "claimed-p1";
+            if (claimedThresholds[t.val] === 'p2') statusClass = "claimed-p2";
+            return (
+                <div key={t.val} className={`gem ${statusClass}`}>
+                    <span className="gem-label">{t.label}</span>
+                </div>
+            );
+        })}
+    </div>
+);
+
+const ScoreDisplay = ({ score, vp, faction, isPlayer }) => (
     <div className="score-display">
         <div className="flex flex-col items-center">
             <span className="text-gray-400 text-xs font-bold">FORZA</span>
@@ -969,20 +960,8 @@ const ScoreDisplay = React.memo(({ score, vp, faction, isPlayer, claimedThreshol
             <span className="text-gray-400 text-xs font-bold">VP</span>
             <span className="text-2xl font-bold font-fantasy text-yellow-400">{vp} / {WIN_SCORE}</span>
         </div>
-        <div className="victory-track">
-            {THRESHOLDS.map(t => {
-                let statusClass = "";
-                if (claimedThresholds && claimedThresholds[t.val] === 'p1') statusClass = "claimed-p1";
-                if (claimedThresholds && claimedThresholds[t.val] === 'p2') statusClass = "claimed-p2";
-                return (
-                    <div key={t.val} className={`gem ${statusClass}`}>
-                        <span className="gem-label">{t.label}</span>
-                    </div>
-                );
-            })}
-        </div>
     </div>
-));
+);
    
 const ChoiceModal = ({ choiceState, onChoice }) => {
     if (!choiceState) return null;
@@ -1143,6 +1122,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [protection, setProtection] = React.useState({ p1_ally: null, p1_all: false, p2_ally: null, p2_all: false });   
             const [graveyardViewer, setGraveyardViewer] = React.useState(null);
             const [lastSpellTurn, setLastSpellTurn] = React.useState({ p1: -1, p2: -1 });
+            const [protectMirage, setProtectMirage] = React.useState({ p1: true, p2: true });
             const [effectQueue, setEffectQueue] = React.useState([]);
             const [isLogVisible, setIsLogVisible] = React.useState(false);
             const [zoomedCard, setZoomedCard] = React.useState(null);
@@ -1238,6 +1218,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setP2VP(0);
                 setClaimedThresholds({ 10: null, 15: null, 20: null, 30: null });
                 setLogs([]); 
+                setProtectMirage({ p1: true, p2: true });
                 
                 // Coin toss to decide who goes first
                 const firstPlayer = window.startingPlayerOverride || Math.floor(Math.random() * 2) + 1;
@@ -1272,42 +1253,39 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const p1Score = React.useMemo(() => calculateTotalStrength(p1Field, p2Field), [p1Field, p2Field]);   
             const p2Score = React.useMemo(() => calculateTotalStrength(p2Field, p1Field), [p2Field, p1Field]);   
    
-            React.useEffect(() => {
-                if (!isEndingTurnRef.current) {
-                    checkScoring();
-                }
-            }, [p1Score, p2Score]);
+            React.useEffect(() => { if (!isEndingTurnRef.current) checkScoring(); }, [p1Score, p2Score]);
    
             const checkScoring = () => {
                 const p1HasDistortion = p1Field.some(c => c.effect === EFFECTS.DISTORTION);
                 const p2HasDistortion = p2Field.some(c => c.effect === EFFECTS.DISTORTION);
 
-                let p1Gained = 0;
-                let p2Gained = 0;
-
                 setClaimedThresholds(prev => {
                     const next = { ...prev };
+                    let p1Gained = 0, p2Gained = 0, changed = false;
 
                     THRESHOLDS.forEach(t => {
-                        if (next[t.val] === null) {
-                            const p1Threshold = p1HasDistortion ? Math.max(1, t.val - 2) : t.val;
-                            const p2Threshold = p2HasDistortion ? Math.max(1, t.val - 2) : t.val;
+                        const p1Threshold = p1HasDistortion ? Math.max(1, t.val - 2) : t.val;
+                        const p2Threshold = p2HasDistortion ? Math.max(1, t.val - 2) : t.val;
 
+                        if (next[t.val] === null) {
                             if (p1Score >= p1Threshold) {
                                 next[t.val] = 'p1';
                                 p1Gained += t.pts;
-                                addLog(`G1 conquista soglia ${t.label}! (+${t.pts} pt)`);
+                                changed = true;
+                                addLog(`G1 conquista soglia ${t.label} (Distorta a ${p1Threshold})! (+${t.pts} pt)`);
                             } else if (p2Score >= p2Threshold) {
                                 next[t.val] = 'p2';
                                 p2Gained += t.pts;
-                                addLog(`G2 conquista soglia ${t.label}! (+${t.pts} pt)`);
+                                changed = true;
+                                addLog(`G2 conquista soglia ${t.label} (Distorta a ${p2Threshold})! (+${t.pts} pt)`);
                             }
                         }
                     });
 
-                    if (p1Gained > 0) setP1VP(v => v + p1Gained);
-                    if (p2Gained > 0) setP2VP(v => v + p2Gained);
-
+                    if (changed) {
+                        if (p1Gained > 0) setP1VP(v => v + p1Gained);
+                        if (p2Gained > 0) setP2VP(v => v + p2Gained);
+                    }
                     return next;
                 });
             };
@@ -1496,18 +1474,19 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const startTurn = (pid) => {
                 if (gameState === 'GAME_OVER') return;
 
-                const activePlayerId = pid === 1 ? 'p1' : 'p2';
-
-                const p1WillHaveRemovals = p1FieldRef.current.some(c => c.stasis === activePlayerId);
-                const p2WillHaveRemovals = p2FieldRef.current.some(c => c.stasis === activePlayerId);
-                const stasisWasRemoved = p1WillHaveRemovals || p2WillHaveRemovals;
-
-                // Clear stasis at the start of the turn ONLY if the current player is the one who applied it
-                setP1Field(prev => prev.map(c => c.stasis === activePlayerId ? { ...c, stasis: null } : c));
-                setP2Field(prev => prev.map(c => c.stasis === activePlayerId ? { ...c, stasis: null } : c));
-
-                if (stasisWasRemoved) {
-                    addLog(`Una nuova fase inizia. Stasi applicata da ${activePlayerId} viene rimossa.`);
+                // Clear stasis at the start of the turn
+                const myFieldSetter = pid === 1 ? setP1Field : setP2Field;
+                let stasisCleared = false;
+                myFieldSetter(prev => prev.map(c => {
+                    if (c.isStasis) {
+                        stasisCleared = true;
+                        const { isStasis, ...rest } = c;
+                        return rest;
+                    }
+                    return c;
+                }));
+                if (stasisCleared) {
+                    addLog(`Le creature si risvegliano dalla Stasi!`);
                 }
 
                 const roundNumber = Math.floor(turnCount / 2) + 1;
@@ -1724,12 +1703,20 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
 
                     if (playedCard.strength >= 3 && mirageCreatures.length > 0) {
                         addLog(`La mossa del nemico minaccia i tuoi Miraggi!`);
+                        const protector = playerField.find(c => c.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE);
+                        const options = protector ? [...mirageCreatures, protector] : mirageCreatures;
+
                         setChoiceState({
-                            title: "Scegli un tuo Miraggio da distruggere",
-                            options: mirageCreatures,
-                            callback: (mirageToDestroy) => {
-                                killCreature(mirageToDestroy, 1);
-                                addLog(`${mirageToDestroy.name} svanisce nel nulla.`);
+                            title: "Scegli una carta da distruggere per l'effetto avversario",
+                            options: options,
+                            callback: (choice) => {
+                                if (choice.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE) {
+                                    addLog(`${choice.name} si sacrifica per salvare i Miraggi!`);
+                                    killCreature(choice, 1, true);
+                                } else {
+                                    killCreature(choice, 1);
+                                    addLog(`${choice.name} svanisce nel nulla.`);
+                                }
                                 setChoiceState(null);
                                 setPostChoiceAction('END_AI_TURN');
                             }
@@ -2626,14 +2613,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
                             msg += `${target.name} è in stasi!`;
                         }
                         break;
                     case EFFECTS.STASIS_STRONGEST:
                         const strongestEnemy = [...enemyField].sort((a, b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
                         if (strongestEnemy) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true } : c));
                             msg += `${strongestEnemy.name} è in stasi!`;
                         } else {
                             msg += "Nessun nemico da mettere in stasi.";
@@ -2641,7 +2628,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS_AND_DRAW:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
                             msg += `${target.name} è in stasi!`;
                             drawCards(pid, 1);
                             msg += ` Pesca una carta.`;
@@ -2998,11 +2985,12 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             <ChoiceModal choiceState={choiceState} onChoice={handleChoice} />
             
             {/* ENEMY AREA */}
-            <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 border-yellow-700/50 min-h-0 ${gameState === 'AI_TURN' ? 'active-turn-opponent' : ''}`}>
+            <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 border-yellow-700/50 min-h-0`}>
                 <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
                     <span className="font-bold font-fantasy text-base text-gray-400">Nemico: {p2Hand.length} carte</span>
                     <div className="flex gap-4 items-center">
-                        <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} claimedThresholds={claimedThresholds} />
+                        <VictoryThresholds claimedThresholds={claimedThresholds} />
+                        <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} />
                     </div>
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
@@ -3054,13 +3042,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             </div>
 
             {/* PLAYER AREA */}
-            <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700/50 min-h-0 ${gameState === 'PLAYER_TURN' ? 'active-turn-player' : ''}`}>
+            <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700/50 min-h-0`}>
                 <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
                     <span className={`font-bold font-fantasy text-base ${playerFaction === FACTIONS.HUMAN ? 'text-blue-400' : playerFaction === FACTIONS.UNDEAD ? 'text-purple-400' : 'text-green-400'}`}>
                         {playerFaction.toUpperCase()}
                     </span>
                     <div className="flex gap-4 items-center">
-                        <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} claimedThresholds={claimedThresholds} />
+                        <VictoryThresholds claimedThresholds={claimedThresholds} />
+                        <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} />
                     </div>
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
