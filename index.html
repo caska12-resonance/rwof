@@ -152,53 +152,54 @@
             border-width: 2px;  
         }  
   
-        .card-name {  
-            position: absolute;  
-            top: 5px;  
-            left: 42px;  
-            right: 5px;  
-            z-index: 3;  
-            text-align: left;  
-            font-size: 13px;  
-            font-weight: 700;  
-            line-height: 1.1;  
-            text-shadow: 0 2px 4px #000;  
-        }  
-  
-        .card-name span {  
-            font-size: 11px;  
-            font-weight: 500;  
-        }  
-  
-        .card-ability {  
-            position: absolute;  
-            bottom: 28px;  
-            left: 0;  
-            right: 0;  
-            z-index: 3;  
-            padding: 5px 7px;  
-            background: rgba(0,0,0,0.7);  
-            font-size: 10px;  
-            line-height: 1.2;  
-            backdrop-filter: blur(2px);  
-            border-top: 1px solid rgba(255,255,255,0.1);  
-            border-bottom: 1px solid rgba(255,255,255,0.05);  
-            height: 48px;  
-            overflow-y: auto;  
-        }  
-  
-        .card-rarity {  
-            position: absolute;  
-            bottom: 4px;  
-            width: 100%;  
-            z-index: 3;  
-            letter-spacing: 1px;  
-            font-size: 11px;  
-            font-weight: 700;  
-            text-shadow: 0 1px 3px #000;  
-            display: flex;  
-            align-items: center;  
-            justify-content: center;  
+        .card-name {
+            position: absolute;
+            top: 5px;
+            left: 42px;
+            right: 5px;
+            z-index: 3;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.1;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1);
+        }
+
+        .card-name span {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .card-ability {
+            position: absolute;
+            bottom: 28px;
+            left: 0;
+            right: 0;
+            z-index: 3;
+            padding: 5px 7px;
+            background: rgba(0,0,0,0.7);
+            font-size: 10px;
+            line-height: 1.2;
+            backdrop-filter: blur(2px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            height: 48px;
+            overflow-y: auto;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        }
+
+        .card-rarity {
+            position: absolute;
+            bottom: 4px;
+            width: 100%;
+            z-index: 3;
+            letter-spacing: 1px;
+            font-size: 11px;
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }  
   
         .rarity-common { border-color: #a1a1aa; }  
@@ -321,6 +322,25 @@
         }
         .zoomed-card-container:active {
             cursor: grabbing;
+        }
+
+        .active-turn-player {
+            box-shadow: inset 0 0 25px rgba(251, 191, 36, 0.5), 0 0 15px rgba(251, 191, 36, 0.3);
+            border-color: rgba(251, 191, 36, 0.7) !important;
+        }
+        .active-turn-opponent {
+            box-shadow: inset 0 0 25px rgba(239, 68, 68, 0.4), 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+
+        .card [title="Stasi"] {
+            font-size: 5rem;
+            opacity: 0.7;
+            text-shadow: 0 0 15px #38bdf8, 0 0 25px #38bdf8;
+        }
+        .card [title="Indistruttibile"] {
+            font-size: 3rem;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.7));
         }
 
         /* Responsive Styles for Mobile */
@@ -559,7 +579,7 @@
             { name: "Titano di Quarzo", strength: 6, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'MIRAGE_HEXPROOF_SPELLS', val: 0, desc: "Miraggio. Non può essere distrutto da Incantesimi." },
             { name: "Cronomas, il Reggente", strength: 3, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'STASIS_STRONGEST', val: 0, desc: "Quando entra in campo, metti in Stasi la creatura nemica con Forza più alta." },
             { name: "Paradosso Vivente", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SWAP_TOTAL_STRENGTH', val: 0, desc: "Quando entra in campo, applica la differenza di Forza totale tra i giocatori come bonus/malus temporaneo a una creatura per lato." },
-            { name: "Custode del Velo", strength: 4, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'PROTECT_MIRAGE_ONCE', val: 0, desc: "Una volta per partita, quando un tuo Miraggio verrebbe distrutto da un effetto bersagliato, invece non viene distrutto." },
+            { name: "Custode del Velo", strength: 2, type: CARD_TYPES.CREATURE, rarity: 'epic', effect: 'SACRIFICE_TO_PROTECT_MIRAGE', val: 0, desc: "Se un tuo Miraggio sta per essere distrutto, puoi scegliere di distruggere questa carta invece del Miraggio." },
             { name: "Eclissi Temporale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'STASIS_AND_DRAW', val: 0, desc: "Metti in Stasi una creatura nemica. Pesca una carta." },
             { name: "Portale dell’Oblio", strength: 3, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'EXILE_CREATURE', val: 0, desc: "Rimuovi dal gioco una creatura nemica." },
             { name: "Anomalia Dimensionale", strength: 2, type: CARD_TYPES.SPELL, rarity: 'epic', effect: 'SWAP_BASE_STRENGTH', val: 0, desc: "Scambia la Forza base di due creature in campo." },
@@ -603,10 +623,9 @@
         const WIN_SCORE = 3;
         const THRESHOLDS = [
             { val: 10, pts: 1, label: "10" },
-            { val: 15, pts: 1, label: "15" },
-            { val: 20, pts: 1, label: "20" },
+            { val: 20, pts: 2, label: "20" },
             { val: 30, pts: 2, label: "30" }
-        ];   
+        ];
    
         const EFFECTS = {   
             NONE: 'NONE',   
@@ -636,7 +655,7 @@
             MIRAGE_HEXPROOF_SPELLS: 'MIRAGE_HEXPROOF_SPELLS',
             STASIS_STRONGEST: 'STASIS_STRONGEST',
             SWAP_TOTAL_STRENGTH: 'SWAP_TOTAL_STRENGTH',
-            PROTECT_MIRAGE_ONCE: 'PROTECT_MIRAGE_ONCE',
+            SACRIFICE_TO_PROTECT_MIRAGE: 'SACRIFICE_TO_PROTECT_MIRAGE',
             STASIS_AND_DRAW: 'STASIS_AND_DRAW',
             EXILE_CREATURE: 'EXILE_CREATURE',
             SWAP_BASE_STRENGTH: 'SWAP_BASE_STRENGTH',
@@ -768,7 +787,7 @@
         };   
    
         const getEffectiveStrength = (card) => {   
-            if (card.isStasis) return 0;
+            if (card.stasis) return 0;
             if (card.isFrozen) return card.currentStrength;
             return Math.max(0, (card.currentStrength || 0) + (card.tempStrength || 0));   
         }   
@@ -925,6 +944,11 @@
             <div className="card-ability scrollbar-hide">
                 {card.desc}
             </div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2 text-4xl z-10 pointer-events-none">
+                {card.stasis && <span title="Stasi">❄️</span>}
+                {card.isIndestructible && <span title="Indistruttibile">🛡️</span>}
+            </div>
             
             <div className={`card-rarity text-rarity-${card.rarity}`}>
                 {card.type === CARD_TYPES.CREATURE ? '⚔️' : '✨'}&nbsp;
@@ -934,22 +958,7 @@
     );
 };
    
-        const VictoryThresholds = ({ claimedThresholds }) => (
-    <div className="victory-track">
-        {THRESHOLDS.map(t => {
-            let statusClass = "";
-            if (claimedThresholds[t.val] === 'p1') statusClass = "claimed-p1";
-            if (claimedThresholds[t.val] === 'p2') statusClass = "claimed-p2";
-            return (
-                <div key={t.val} className={`gem ${statusClass}`}>
-                    <span className="gem-label">{t.label}</span>
-                </div>
-            );
-        })}
-    </div>
-);
-
-const ScoreDisplay = ({ score, vp, faction, isPlayer }) => (
+const ScoreDisplay = React.memo(({ score, vp, faction, isPlayer, claimedThresholds }) => (
     <div className="score-display">
         <div className="flex flex-col items-center">
             <span className="text-gray-400 text-xs font-bold">FORZA</span>
@@ -960,8 +969,20 @@ const ScoreDisplay = ({ score, vp, faction, isPlayer }) => (
             <span className="text-gray-400 text-xs font-bold">VP</span>
             <span className="text-2xl font-bold font-fantasy text-yellow-400">{vp} / {WIN_SCORE}</span>
         </div>
+        <div className="victory-track">
+            {THRESHOLDS.map(t => {
+                let statusClass = "";
+                if (claimedThresholds && claimedThresholds[t.val] === 'p1') statusClass = "claimed-p1";
+                if (claimedThresholds && claimedThresholds[t.val] === 'p2') statusClass = "claimed-p2";
+                return (
+                    <div key={t.val} className={`gem ${statusClass}`}>
+                        <span className="gem-label">{t.label}</span>
+                    </div>
+                );
+            })}
+        </div>
     </div>
-);
+));
    
 const ChoiceModal = ({ choiceState, onChoice }) => {
     if (!choiceState) return null;
@@ -1122,7 +1143,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const [protection, setProtection] = React.useState({ p1_ally: null, p1_all: false, p2_ally: null, p2_all: false });   
             const [graveyardViewer, setGraveyardViewer] = React.useState(null);
             const [lastSpellTurn, setLastSpellTurn] = React.useState({ p1: -1, p2: -1 });
-            const [protectMirage, setProtectMirage] = React.useState({ p1: true, p2: true });
             const [effectQueue, setEffectQueue] = React.useState([]);
             const [isLogVisible, setIsLogVisible] = React.useState(false);
             const [zoomedCard, setZoomedCard] = React.useState(null);
@@ -1147,7 +1167,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 window.addEventListener('resize', checkIsMobile);
                 return () => window.removeEventListener('resize', checkIsMobile);
             }, []);
-   
+
             const p2HandRef = React.useRef([]);   
             const p1FieldRef = React.useRef([]);   
             const p1GraveRef = React.useRef([]);   
@@ -1218,7 +1238,6 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 setP2VP(0);
                 setClaimedThresholds({ 10: null, 15: null, 20: null, 30: null });
                 setLogs([]); 
-                setProtectMirage({ p1: true, p2: true });
                 
                 // Coin toss to decide who goes first
                 const firstPlayer = window.startingPlayerOverride || Math.floor(Math.random() * 2) + 1;
@@ -1253,39 +1272,42 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const p1Score = React.useMemo(() => calculateTotalStrength(p1Field, p2Field), [p1Field, p2Field]);   
             const p2Score = React.useMemo(() => calculateTotalStrength(p2Field, p1Field), [p2Field, p1Field]);   
    
-            React.useEffect(() => { if (!isEndingTurnRef.current) checkScoring(); }, [p1Score, p2Score]);
+            React.useEffect(() => {
+                if (!isEndingTurnRef.current) {
+                    checkScoring();
+                }
+            }, [p1Score, p2Score]);
    
             const checkScoring = () => {
                 const p1HasDistortion = p1Field.some(c => c.effect === EFFECTS.DISTORTION);
                 const p2HasDistortion = p2Field.some(c => c.effect === EFFECTS.DISTORTION);
 
+                let p1Gained = 0;
+                let p2Gained = 0;
+
                 setClaimedThresholds(prev => {
                     const next = { ...prev };
-                    let p1Gained = 0, p2Gained = 0, changed = false;
 
                     THRESHOLDS.forEach(t => {
-                        const p1Threshold = p1HasDistortion ? Math.max(1, t.val - 2) : t.val;
-                        const p2Threshold = p2HasDistortion ? Math.max(1, t.val - 2) : t.val;
-
                         if (next[t.val] === null) {
+                            const p1Threshold = p1HasDistortion ? Math.max(1, t.val - 2) : t.val;
+                            const p2Threshold = p2HasDistortion ? Math.max(1, t.val - 2) : t.val;
+
                             if (p1Score >= p1Threshold) {
                                 next[t.val] = 'p1';
                                 p1Gained += t.pts;
-                                changed = true;
-                                addLog(`G1 conquista soglia ${t.label} (Distorta a ${p1Threshold})! (+${t.pts} pt)`);
+                                addLog(`G1 conquista soglia ${t.label}! (+${t.pts} pt)`);
                             } else if (p2Score >= p2Threshold) {
                                 next[t.val] = 'p2';
                                 p2Gained += t.pts;
-                                changed = true;
-                                addLog(`G2 conquista soglia ${t.label} (Distorta a ${p2Threshold})! (+${t.pts} pt)`);
+                                addLog(`G2 conquista soglia ${t.label}! (+${t.pts} pt)`);
                             }
                         }
                     });
 
-                    if (changed) {
-                        if (p1Gained > 0) setP1VP(v => v + p1Gained);
-                        if (p2Gained > 0) setP2VP(v => v + p2Gained);
-                    }
+                    if (p1Gained > 0) setP1VP(v => v + p1Gained);
+                    if (p2Gained > 0) setP2VP(v => v + p2Gained);
+
                     return next;
                 });
             };
@@ -1474,19 +1496,18 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             const startTurn = (pid) => {
                 if (gameState === 'GAME_OVER') return;
 
-                // Clear stasis at the start of the turn
-                const myFieldSetter = pid === 1 ? setP1Field : setP2Field;
-                let stasisCleared = false;
-                myFieldSetter(prev => prev.map(c => {
-                    if (c.isStasis) {
-                        stasisCleared = true;
-                        const { isStasis, ...rest } = c;
-                        return rest;
-                    }
-                    return c;
-                }));
-                if (stasisCleared) {
-                    addLog(`Le creature si risvegliano dalla Stasi!`);
+                const activePlayerId = pid === 1 ? 'p1' : 'p2';
+
+                const p1WillHaveRemovals = p1FieldRef.current.some(c => c.stasis === activePlayerId);
+                const p2WillHaveRemovals = p2FieldRef.current.some(c => c.stasis === activePlayerId);
+                const stasisWasRemoved = p1WillHaveRemovals || p2WillHaveRemovals;
+
+                // Clear stasis at the start of the turn ONLY if the current player is the one who applied it
+                setP1Field(prev => prev.map(c => c.stasis === activePlayerId ? { ...c, stasis: null } : c));
+                setP2Field(prev => prev.map(c => c.stasis === activePlayerId ? { ...c, stasis: null } : c));
+
+                if (stasisWasRemoved) {
+                    addLog(`Una nuova fase inizia. Stasi applicata da ${activePlayerId} viene rimossa.`);
                 }
 
                 const roundNumber = Math.floor(turnCount / 2) + 1;
@@ -2058,17 +2079,39 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                     return;
                 }
 
+                const myField = ownerPid === 1 ? p1FieldRef.current : p2FieldRef.current;
                 const isMirage = creatureToKill.isMirage || [EFFECTS.MIRAGE, EFFECTS.MIRAGE_HEXPROOF_SPELLS, EFFECTS.MIRAGE_COPY_STRENGTH].includes(creatureToKill.effect);
-                const canProtect = ownerPid === 1 ? protectMirage.p1 : protectMirage.p2;
+                const protector = myField.find(c => c.effect === EFFECTS.SACRIFICE_TO_PROTECT_MIRAGE);
 
-                if (isMirage && canProtect && source && needsTarget(source)) {
-                    addLog(`Il Custode del Velo protegge ${creatureToKill.name}!`);
-                    if (ownerPid === 1) {
-                        setProtectMirage(prev => ({ ...prev, p1: false }));
-                    } else {
-                        setProtectMirage(prev => ({ ...prev, p2: false }));
+                if (isMirage && protector && !isSacrifice) {
+                    if (ownerPid === 1) { // Player's turn
+                        setChoiceState({
+                            title: `Salvare ${creatureToKill.name}?`,
+                            options: [],
+                            actions: [
+                                { label: `Sì (Sacrifica ${protector.name})`, callback: () => {
+                                    addLog(`${protector.name} si sacrifica per salvare ${creatureToKill.name}!`);
+                                    killCreature(protector, ownerPid, true);
+                                    setChoiceState(null);
+                                }},
+                                { label: "No", callback: () => {
+                                    addLog(`${creatureToKill.name} non viene salvato.`);
+                                    setChoiceState(null);
+                                    killCreature(creatureToKill, ownerPid, false, source);
+                                }}
+                            ]
+                        });
+                        return; // Stop execution to wait for player choice
+                    } else { // AI's turn
+                        if (getEffectiveStrength(creatureToKill) > getEffectiveStrength(protector)) {
+                            addLog(`${protector.name} si sacrifica per salvare ${creatureToKill.name}!`);
+                            killCreature(protector, ownerPid, true);
+                            return; // The protector is sacrificed, the mirage is saved.
+                        } else {
+                            addLog(`${protector.name} non si sacrifica per ${creatureToKill.name}.`);
+                            // Proceed to kill the original mirage
+                        }
                     }
-                    return;
                 }
 
                 // Remove from field and apply triggers to remaining allies in one go.
@@ -2583,14 +2626,14 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
                             msg += `${target.name} è in stasi!`;
                         }
                         break;
                     case EFFECTS.STASIS_STRONGEST:
                         const strongestEnemy = [...enemyField].sort((a, b) => getEffectiveStrength(b) - getEffectiveStrength(a))[0];
                         if (strongestEnemy) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === strongestEnemy.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
                             msg += `${strongestEnemy.name} è in stasi!`;
                         } else {
                             msg += "Nessun nemico da mettere in stasi.";
@@ -2598,7 +2641,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                         break;
                     case EFFECTS.STASIS_AND_DRAW:
                         if (target) {
-                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, isStasis: true } : c));
+                            enemyFieldSetter(prev => prev.map(c => c.uid === target.uid ? { ...c, stasis: (isP1 ? 'p1' : 'p2') } : c));
                             msg += `${target.name} è in stasi!`;
                             drawCards(pid, 1);
                             msg += ` Pesca una carta.`;
@@ -2955,12 +2998,11 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             <ChoiceModal choiceState={choiceState} onChoice={handleChoice} />
             
             {/* ENEMY AREA */}
-            <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 border-yellow-700/50 min-h-0`}>
+            <div className={`flex-1 ${p2FactionBG} board-area flex flex-col relative border-b-4 border-yellow-700/50 min-h-0 ${gameState === 'AI_TURN' ? 'active-turn-opponent' : ''}`}>
                 <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
                     <span className="font-bold font-fantasy text-base text-gray-400">Nemico: {p2Hand.length} carte</span>
                     <div className="flex gap-4 items-center">
-                        <VictoryThresholds claimedThresholds={claimedThresholds} />
-                        <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} />
+                        <ScoreDisplay score={p2Score} vp={p2VP} faction={enemyFaction} isPlayer={false} claimedThresholds={claimedThresholds} />
                     </div>
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
@@ -3012,14 +3054,13 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
             </div>
 
             {/* PLAYER AREA */}
-            <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700/50 min-h-0`}>
+            <div className={`flex-1 ${p1FactionBG} board-area flex flex-col relative border-t-4 border-yellow-700/50 min-h-0 ${gameState === 'PLAYER_TURN' ? 'active-turn-player' : ''}`}>
                 <div className="h-12 flex items-center justify-between px-4 bg-black/40 shadow-md z-10 shrink-0">
                     <span className={`font-bold font-fantasy text-base ${playerFaction === FACTIONS.HUMAN ? 'text-blue-400' : playerFaction === FACTIONS.UNDEAD ? 'text-purple-400' : 'text-green-400'}`}>
                         {playerFaction.toUpperCase()}
                     </span>
                     <div className="flex gap-4 items-center">
-                        <VictoryThresholds claimedThresholds={claimedThresholds} />
-                        <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} />
+                        <ScoreDisplay score={p1Score} vp={p1VP} faction={playerFaction} isPlayer={true} claimedThresholds={claimedThresholds} />
                     </div>
                 </div>
                 <div className="flex-1 flex px-2 overflow-hidden">
