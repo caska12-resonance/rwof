@@ -255,6 +255,22 @@
             left: 0;
             width: 100%;
             pointer-events: none;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .battle-scoreboard {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--accent-purple);
+            padding: 5px 20px;
+            border-radius: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            pointer-events: auto;
         }
 
         .log-panel {
@@ -321,7 +337,11 @@
         <div id="screen-battle" class="screen">
             <canvas id="battle-canvas"></canvas>
             <div id="ui-overlay">
-                <!-- HP bars and names will be drawn on canvas, but fixed UI here -->
+                <div class="battle-scoreboard">
+                    <div id="score-player" style="color:var(--accent-gold)">TU: 0</div>
+                    <div style="color:#888">VS</div>
+                    <div id="score-ai" style="color:#ff4500">AI: 0</div>
+                </div>
             </div>
             <div id="battle-log" class="log-panel"></div>
         </div>
@@ -329,8 +349,7 @@
         <!-- Game Over -->
         <div id="screen-gameover" class="screen" style="background: rgba(0,0,0,0.8);">
             <h1 id="gameover-title">VITTORIA!</h1>
-            <p id="gameover-stats" style="margin-bottom: 2rem;"></p>
-            <button class="btn" onclick="location.reload()">Ricomincia</button>
+            <div id="gameover-stats" style="margin-bottom: 2rem; text-align: center;"></div>
         </div>
     </div>
 
@@ -511,6 +530,11 @@
             playerTeam: [],
             aiTeam: [],
             bannedHeroes: [],
+            // Series Tracking
+            seriesScore: { player: 0, ai: 0 },
+            playerHeroHistory: [], // IDs of heroes player has used in the series
+            playerWinsWith: [],    // IDs of heroes player won with
+            playerRoleUsage: {},   // Role counts picked by player
 
             startPickBan() {
                 this.state = "PICKBAN";
@@ -519,7 +543,18 @@
                 this.initPickBan();
             },
 
+            resetForNextMatch() {
+                this.playerTeam = [];
+                this.aiTeam = [];
+                this.bannedHeroes = [];
+                this.state = "PICKBAN";
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('screen-pickban').classList.add('active');
+                this.initPickBan();
+            },
+
             initPickBan() {
+                this.isAITurn = false;
                 const grid = document.getElementById('hero-grid');
                 grid.innerHTML = '';
                 this.heroes.forEach(h => {
@@ -621,6 +656,10 @@
                     label.innerText = "TUO PICK";
                     this.updateTeamUI('player-team', this.playerTeam, true);
                     this.addLog(`⚔️ HAI SCELTO <b>${hero.name}</b>`, "var(--accent-gold)");
+
+                    // Track for AI adaptation
+                    this.playerHeroHistory.push(hero.id);
+                    this.playerRoleUsage[hero.role] = (this.playerRoleUsage[hero.role] || 0) + 1;
                 } else {
                     this.aiTeam.push(hero);
                     card.classList.add('ai-picked');
@@ -689,28 +728,48 @@
                 for (let i = 0; i < config.count; i++) {
                     let chosen;
                     if (config.type === "BAN") {
-                        // AI bans a strong hero not yet picked
-                        chosen = available.sort((a, b) => (b.hp + b.atk*10) - (a.hp + a.atk*10))[0];
-                    } else {
-                        // AI picks a hero to balance the team
-                        const needsTank = !this.aiTeam.find(h => h.role === "Tank");
-                        const needsSupport = !this.aiTeam.find(h => h.role === "Support");
-
-                        if (needsTank && available.find(h => h.role === "Tank")) {
-                            chosen = available.find(h => h.role === "Tank");
-                        } else if (needsSupport && available.find(h => h.role === "Support")) {
-                            chosen = available.find(h => h.role === "Support");
+                        // ADAPTATION: Prioritize banning heroes the player won with
+                        const winners = available.filter(h => this.playerWinsWith.includes(h.id));
+                        if (winners.length > 0 && Math.random() < 0.8) {
+                            chosen = winners[Math.floor(Math.random() * winners.length)];
+                            this.addLog(`🤖 L'AI si adatta: banna <b>${chosen.name}</b> (pericolo!)`, "#ff4500");
                         } else {
                             chosen = available.sort((a, b) => (b.hp + b.atk*10) - (a.hp + a.atk*10))[0];
                         }
+                    } else {
+                        // ADAPTATION: Analyze player role usage and counter
+                        const roleScores = { Tank: 1, Warrior: 1, Assassin: 1, Mage: 1, Ranger: 1, Support: 1 };
+
+                        // Counter-picking logic
+                        const pRoles = this.playerRoleUsage;
+                        if ((pRoles["Mage"] || 0) + (pRoles["Ranger"] || 0) > 2) roleScores["Assassin"] += 2;
+                        if ((pRoles["Assassin"] || 0) > 2) roleScores["Tank"] += 2;
+                        if ((pRoles["Tank"] || 0) > 2) roleScores["Mage"] += 2;
+                        if ((pRoles["Warrior"] || 0) > 2) roleScores["Mage"] += 1;
+
+                        // Balance team logic
+                        if (!this.aiTeam.find(h => h.role === "Tank")) roleScores["Tank"] += 3;
+                        if (!this.aiTeam.find(h => h.role === "Support")) roleScores["Support"] += 2;
+
+                        // Sort available by role score and then stats
+                        const sorted = available.sort((a, b) => {
+                            const scoreA = roleScores[a.role] * 1000 + (a.hp + a.atk * 10);
+                            const scoreB = roleScores[b.role] * 1000 + (b.hp + b.atk * 10);
+                            return scoreB - scoreA;
+                        });
+                        chosen = sorted[0];
+
+                        if (roleScores[chosen.role] > 2 && Math.random() < 0.5) {
+                            this.addLog(`🤖 L'AI sta contrastando la tua strategia...`, "#ff4500");
+                        }
                     }
-                    
+
                     if (config.type === "BAN") this.banHero(chosen.id, "AI");
                     else this.pickHero(chosen.id, "AI");
 
                     // Remove from temporary available list if multiple picks
                     const idx = available.findIndex(h => h.id === chosen.id);
-                    available.splice(idx, 1);
+                    if (idx !== -1) available.splice(idx, 1);
                 }
 
                 this.nextPhase();
@@ -718,6 +777,9 @@
 
             updatePBUI() {
                 const status = document.getElementById('pb-status');
+                const roundNum = this.seriesScore.player + this.seriesScore.ai + 1;
+                const scoreStr = `<span style="color:#aaa; font-size:1rem; margin-right:15px;">Round ${roundNum} [Serie: ${this.seriesScore.player}-${this.seriesScore.ai}]</span>`;
+
                 const phaseNames = {
                     "PLAYER_BAN_1": "🚫 TUA FASE DI BAN (1)",
                     "AI_BAN_1": "🤖 FASE DI BAN AVVERSARIO (1)",
@@ -730,7 +792,7 @@
                     "PLAYER_PICK_3": "⚔️ TUA FASE DI PICK FINALE (SCEGLI 1)",
                     "AI_PICK_3": "🤖 FASE DI PICK FINALE AVVERSARIO (1)"
                 };
-                status.innerHTML = `<span style="font-size: 1.4rem; letter-spacing: 1px;">${phaseNames[this.pbPhase] || this.pbPhase}</span>`;
+                status.innerHTML = scoreStr + `<span style="font-size: 1.4rem; letter-spacing: 1px;">${phaseNames[this.pbPhase] || this.pbPhase}</span>`;
 
                 // Highlight active turn
                 status.style.color = this.pbPhase.startsWith("PLAYER") ? "var(--accent-gold)" : "#ff4500";
@@ -902,6 +964,13 @@
             initBattle() {
                 const canvas = document.getElementById('battle-canvas');
                 this.bCtx = canvas.getContext('2d');
+
+                const roundNum = this.seriesScore.player + this.seriesScore.ai + 1;
+                this.addLog(`⭐ INIZIO MATCH ${roundNum} [Serie: ${this.seriesScore.player}-${this.seriesScore.ai}]`, "white");
+
+                document.getElementById('score-player').innerText = `TU: ${this.seriesScore.player}`;
+                document.getElementById('score-ai').innerText = `AI: ${this.seriesScore.ai}`;
+
                 this.resizeCanvas(canvas);
 
                 this.entities = [];
@@ -1313,12 +1382,42 @@
                 const aiAlive = this.entities.find(e => !e.isPlayer && !e.isDead);
 
                 if (this.entities.length > 0 && (!playerAlive || !aiAlive)) {
+                    const playerWon = !!playerAlive;
+                    if (playerWon) {
+                        this.seriesScore.player++;
+                        this.playerTeam.forEach(h => {
+                            if (!this.playerWinsWith.includes(h.id)) this.playerWinsWith.push(h.id);
+                        });
+                    } else {
+                        this.seriesScore.ai++;
+                    }
+
+                    const seriesOver = this.seriesScore.player >= 2 || this.seriesScore.ai >= 2;
+
                     this.state = "GAMEOVER";
                     document.getElementById('screen-gameover').classList.add('active');
                     const title = document.getElementById('gameover-title');
-                    title.innerText = playerAlive ? "VITTORIA EPICA!" : "SCONFITTA...";
-                    title.style.color = playerAlive ? "var(--accent-gold)" : "red";
-                    document.getElementById('gameover-stats').innerText = playerAlive ? "Hai dominato l'arena!" : "I tuoi eroi sono caduti.";
+                    const stats = document.getElementById('gameover-stats');
+
+                    if (seriesOver) {
+                        const finalWin = this.seriesScore.player >= 2;
+                        title.innerText = finalWin ? "CAMPIONE DELL'ARENA!" : "SERIE PERDUTA";
+                        title.style.color = finalWin ? "var(--accent-gold)" : "red";
+                        stats.innerHTML = `
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">Score Finale: ${this.seriesScore.player} - ${this.seriesScore.ai}</div>
+                            <button class="btn" onclick="location.reload()">NUOVA SERIE</button>
+                        `;
+                    } else {
+                        title.innerText = playerWon ? "VITTORIA MATCH!" : "SCONFITTA MATCH";
+                        title.style.color = playerWon ? "var(--accent-gold)" : "red";
+                        stats.innerHTML = `
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">Score Serie: ${this.seriesScore.player} - ${this.seriesScore.ai}</div>
+                            <button class="btn" onclick="game.resetForNextMatch()">PROSSIMO MATCH</button>
+                        `;
+                    }
+
+                    // Hide the default reload button if it exists in HTML (we just replaced stats innerHTML which might contain it if we are not careful)
+                    // Let's check the HTML structure of screen-gameover.
                     return true;
                 }
                 return false;
