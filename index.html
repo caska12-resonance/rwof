@@ -418,47 +418,82 @@
 
         const heroDrawer = {
             getHeroSprite(hero, frame, action) {
-                // 16x16 detailed procedural sprite
                 const sprite = Array(16).fill(0).map(() => Array(16).fill(0));
 
-                // Head (Rows 2-6)
-                for(let r=2; r<=6; r++) for(let c=6; c<=10; c++) sprite[r][c] = 4;
-                // Hair/Helmet
-                for(let c=6; c<=10; c++) sprite[2][c] = 2;
+                // Base Head (Rows 2-6, Cols 6-10)
+                const headStart = 2, headEnd = 6;
+                for(let r=headStart; r<=headEnd; r++) for(let c=6; c<=10; c++) sprite[r][c] = 4;
                 // Eyes
                 sprite[4][7] = 5; sprite[4][9] = 5;
-                // Body (Rows 7-13)
-                for(let r=7; r<=13; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
-                // Arms
-                for(let r=8; r<=11; r++) { sprite[r][4] = 4; sprite[r][12] = 4; }
-                // Armor/Clothing details
-                for(let r=7; r<=13; r++) sprite[r][8] = 3;
 
-                // Role-specific additions
                 if (hero.role === "Tank") {
-                    // Shield
-                    for(let r=8; r<=13; r++) for(let c=3; c<=6; c++) sprite[r][c] = 3;
-                    // Heavy helmet
-                    for(let r=1; r<=3; r++) for(let c=5; c<=11; c++) sprite[r][c] = 3;
-                } else if (hero.role === "Mage") {
-                    // Wizard hat
-                    for(let r=0; r<=2; r++) for(let c=8-r; c<=8+r; c++) sprite[r][c] = 2;
-                    // Staff
-                    for(let r=4; r<=14; r++) sprite[r][13] = 2;
-                    sprite[3][13] = 3; sprite[4][13] = 3;
+                    // Bulky Body
+                    for(let r=7; r<=14; r++) for(let c=4; c<=12; c++) sprite[r][c] = 1;
+                    // Massive Shield
+                    for(let r=6; r<=13; r++) for(let c=2; c<=6; c++) sprite[r][c] = 3;
+                    // Horned Helmet
+                    for(let r=1; r<=3; r++) for(let c=5; c<=11; c++) sprite[r][c] = 2;
+                    sprite[0][5] = 3; sprite[0][11] = 3;
+                    // Arms
+                    for(let r=8; r<=11; r++) sprite[r][13] = 4;
                 } else if (hero.role === "Warrior") {
-                    // Sword
-                    for(let r=4; r<=9; r++) sprite[r][3] = 3;
-                    sprite[10][3] = 2;
+                    // Standard Body
+                    for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
+                    // Big Sword
+                    for(let r=3; r<=10; r++) sprite[r][3] = 3;
+                    sprite[11][3] = 2; // Hilt
+                    // Shoulder pads
+                    sprite[7][4] = 3; sprite[7][12] = 3;
+                    // Hair
+                    for(let c=6; c<=10; c++) sprite[2][c] = 2;
                 } else if (hero.role === "Assassin") {
-                    // Cape/Hood
-                    for(let r=2; r<=14; r++) { sprite[r][5] = 2; sprite[r][11] = 2; }
-                    // Daggers
+                    // Lean Body
+                    for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                    // Hood & Cape
+                    for(let r=2; r<=15; r++) { sprite[r][5] = 2; sprite[r][11] = 2; }
+                    for(let c=5; c<=11; c++) sprite[2][c] = 2;
+                    // Dual Daggers
                     sprite[11][4] = 3; sprite[11][12] = 3;
+                    sprite[12][4] = 2; sprite[12][12] = 2;
+                } else if (hero.role === "Mage") {
+                    // Robes (Flare at bottom)
+                    for(let r=7; r<=11; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                    for(let r=12; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
+                    // Wizard Hat
+                    for(let r=0; r<=2; r++) for(let c=8-r; c<=8+r; c++) sprite[r][c] = 2;
+                    // Ornate Staff
+                    for(let r=4; r<=15; r++) sprite[r][13] = 2;
+                    sprite[3][13] = 3; // Orb
                 } else if (hero.role === "Ranger") {
+                    // Standard Body
+                    for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
                     // Bow
-                    for(let r=6; r<=12; r++) sprite[r][13] = 2;
-                    sprite[9][12] = 3;
+                    for(let r=5; r<=13; r++) sprite[r][13] = 2;
+                    sprite[9][12] = 3; // Arrow/String point
+                    // Hood
+                    for(let c=6; c<=10; c++) sprite[2][c] = 2;
+                    sprite[3][5] = 2; sprite[3][11] = 2;
+                } else if (hero.role === "Support") {
+                    // Ornate Robes
+                    for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
+                    // Wings for Seraphiel
+                    if (hero.name === "Seraphiel") {
+                        for(let r=5; r<=11; r++) { sprite[r][3] = 3; sprite[r][13] = 3; }
+                        sprite[6][2] = 3; sprite[6][14] = 3;
+                    } else {
+                        // Halo/Aura for others
+                        sprite[1][8] = 3; sprite[0][7] = 3; sprite[0][9] = 3;
+                    }
+                    // Hair/Headdress
+                    for(let c=6; c<=10; c++) sprite[2][c] = 3;
+                }
+
+                // Generic Arms (if not role-specific)
+                if (hero.role !== "Tank" && hero.role !== "Assassin") {
+                    for(let r=8; r<=11; r++) {
+                        if (sprite[r][4] === 0) sprite[r][4] = 4;
+                        if (sprite[r][12] === 0) sprite[r][12] = 4;
+                    }
                 }
 
                 // Outline pass
@@ -494,15 +529,22 @@
                 }
 
                 // Floating/Bobbing animation
-                const bob = Math.sin(frame * 0.15) * (size * 0.05);
+                const bob = Math.sin(frame * 0.15) * (size * 0.04);
+                const breathe = 1 + Math.sin(frame * 0.1) * 0.02;
                 
                 // Shadow
                 ctx.fillStyle = "rgba(0,0,0,0.3)";
                 ctx.beginPath();
-                ctx.ellipse(x + size/2, y + size * 0.9, size/3, size/8, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + size/2, y + size * 0.9, (size/3) * breathe, size/8, 0, 0, Math.PI * 2);
                 ctx.fill();
 
                 const sprite = this.getHeroSprite(hero, frame, action);
+
+                // Scale slightly for breathing effect
+                ctx.translate(x + size/2, y + size/2);
+                ctx.scale(breathe, 1/breathe);
+                ctx.translate(-(x + size/2), -(y + size/2));
+
                 canvasUtils.drawPixelSprite(ctx, x, y + bob, size, sprite, colors);
 
                 // Glow effect for some roles
