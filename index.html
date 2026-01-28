@@ -603,8 +603,7 @@
         const WIN_SCORE = 3;
         const THRESHOLDS = [
             { val: 10, pts: 1, label: "10" },
-            { val: 15, pts: 1, label: "15" },
-            { val: 20, pts: 1, label: "20" },
+            { val: 20, pts: 2, label: "20" },
             { val: 30, pts: 2, label: "30" }
         ];
    
@@ -1147,6 +1146,7 @@ const ChoiceModal = ({ choiceState, onChoice }) => {
                 window.addEventListener('resize', checkIsMobile);
                 return () => window.removeEventListener('resize', checkIsMobile);
             }, []);
+
 
             const p2HandRef = React.useRef([]);   
             const p1FieldRef = React.useRef([]);   
