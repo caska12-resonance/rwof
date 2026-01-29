@@ -131,10 +131,10 @@
             cursor: pointer;
             transition: all 0.2s ease-out;
             position: relative;
-            overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             align-items: center;
             text-align: center;
+            min-height: 220px;
         }
 
         .hero-card canvas {
@@ -335,9 +335,6 @@
 
         <!-- Positioning -->
         <div id="screen-positioning" class="screen">
-            <div id="positioning-instruction" style="position:absolute; top:20px; text-align:center; width:100%; color: var(--accent-gold); font-weight:bold; z-index:10;">
-                Trascina i tuoi eroi sulla griglia 9x9 di sinistra
-            </div>
             <canvas id="positioning-canvas"></canvas>
             <button id="start-battle-btn" class="btn" style="position:absolute; bottom:20px; display:none;" onclick="game.startBattle()">INIZIA BATTAGLIA</button>
         </div>
@@ -437,32 +434,32 @@
                     glow: null
                 };
 
-                // Unique Hero Customization
+                // Unique Hero Customization per User Specs
                 switch(hero.id) {
-                    case 0: f.skin = "#7a9a7a"; f.hair = "#333"; f.acc = "#888"; break; // Gromthar (Greenish/Spikes)
-                    case 1: f.main = "#2b5d8a"; f.alt = "#c0c0c0"; f.acc = "#ffd700"; break; // Ironwall (Silver/Blue/Gold)
-                    case 2: f.skin = "#888"; f.main = "#555"; f.alt = "#333"; f.acc = "#999"; break; // Stoneguard (Grey)
-                    case 3: f.skin = "#d2b48c"; f.main = "#800"; f.alt = "#200"; f.acc = "#ff4444"; break; // Drakmor (Red/Dark)
-                    case 4: f.acc = "#ffd700"; f.alt = "#2b5d8a"; f.hair = "#ffd700"; break; // Artorius (Gold Crown)
-                    case 5: f.main = "#a00"; f.hair = "#f44"; f.alt = "#888"; break; // Valeria (Red Ponytail)
-                    case 6: f.skin = "#d2b48c"; f.hair = "#844"; f.main = "#8b4513"; break; // Berserker (Mohawk)
-                    case 7: f.main = "#483d8b"; f.hair = "#111"; f.acc = "#c0c0c0"; break; // Blade Master (Samurai)
-                    case 8: f.skin = "#e0d0f0"; f.main = "#4b0082"; f.eye = "#f0f"; f.glow = "#f0f"; break; // Nyxrin (Glow Eyes)
-                    case 9: f.main = "#111"; f.alt = "#000"; f.acc = "#444"; break; // Shadowblade (Ninja)
-                    case 10: f.skin = "#f5f5dc"; f.main = "#2f4f4f"; f.acc = "#fff"; break; // Vorthak (Bone Mask)
-                    case 11: f.main = "#600"; f.alt = "#000"; f.acc = "#f00"; break; // Nightstalker (Red Hood)
-                    case 12: f.main = "#4169e1"; f.hair = "#fff"; f.acc = "#f0f8ff"; f.glow = "#fff"; break; // Lunareth (Moon)
-                    case 13: f.main = "#ff4500"; f.hair = "#ff0"; f.acc = "#ffff00"; f.glow = "#f00"; break; // Elowen (Fire)
-                    case 14: f.main = "#9932cc"; f.hair = "#888"; f.acc = "#00ffff"; f.glow = "#0ff"; break; // Archmage (Astral)
-                    case 15: f.main = "#00ced1"; f.hair = "#afeeee"; f.acc = "#fff"; f.glow = "#fff"; break; // Frostwitch (Ice)
-                    case 16: f.main = "#228b22"; f.hair = "#8b4513"; f.acc = "#adff2f"; break; // Hawkeye (Forest)
-                    case 17: f.main = "#87ceeb"; f.hair = "#fff"; f.acc = "#ffffff"; break; // Windrunner (Sky)
-                    case 18: f.main = "#556b2f"; f.hair = "#d2b48c"; f.acc = "#8b4513"; break; // Sniper (Camo)
-                    case 19: f.main = "#ffd700"; f.alt = "#ffffff"; f.acc = "#ffffff"; break; // Archer Lord (Royal)
-                    case 20: f.skin = "#fffaf0"; f.hair = "#ffd700"; f.main = "#fff"; f.acc = "#ffd700"; f.glow = "#ffd700"; break; // Seraphiel (Holy)
-                    case 21: f.main = "#f8f8ff"; f.alt = "#b22222"; f.acc = "#ffd700"; break; // Cleric (Red/White)
-                    case 22: f.main = "#20b2aa"; f.hair = "#8b4513"; f.acc = "#ff00ff"; break; // Bard (Teal/Pink)
-                    case 23: f.main = "#556b2f"; f.hair = "#228b22"; f.acc = "#deb887"; break; // Druid (Moss)
+                    case 0: f.main = "#5D4037"; f.alt = "#D32F2F"; f.acc = "#795548"; break; // Gromthar (Marrone/Rosso Scuro)
+                    case 1: f.main = "#757575"; f.alt = "#455A64"; f.acc = "#CFD8DC"; break; // Ironwall (Grigi/Blu Acciaio)
+                    case 2: f.main = "#616161"; f.alt = "#424242"; f.acc = "#4CAF50"; break; // Stoneguard (Grigio/Verde)
+                    case 3: f.main = "#4A148C"; f.alt = "#000000"; f.acc = "#B71C1C"; break; // Drakmor (Viola/Nero/Rosso)
+                    case 4: f.main = "#1976D2"; f.alt = "#BDBDBD"; f.acc = "#E3F2FD"; break; // Artorius (Blu/Argento)
+                    case 5: f.main = "#B71C1C"; f.alt = "#000000"; f.acc = "#757575"; break; // Valeria (Rosso/Nero)
+                    case 6: f.main = "#D32F2F"; f.alt = "#5D4037"; f.acc = "#FFCDD2"; break; // Berserker (Rosso Sangue/Marrone)
+                    case 7: f.main = "#7B1FA2"; f.alt = "#BDBDBD"; f.acc = "#E1BEE7"; break; // Blade Master (Viola/Argento)
+                    case 8: f.main = "#1A237E"; f.alt = "#0D47A1"; f.acc = "#E8EAF6"; break; // Nyxrin (Blu Notte)
+                    case 9: f.main = "#000000"; f.alt = "#4A148C"; f.acc = "#7B1FA2"; break; // Shadowblade (Nero/Viola)
+                    case 10: f.main = "#1B5E20"; f.alt = "#2E7D32"; f.acc = "#C8E6C9"; break; // Vorthak (Verde Scuro)
+                    case 11: f.main = "#00E676"; f.alt = "#00C853"; f.acc = "#69F0AE"; break; // Nightstalker (Verde Tossico)
+                    case 12: f.main = "#D84315"; f.alt = "#BF360C"; f.acc = "#FFAB91"; break; // Lunareth (Rosso/Arancio)
+                    case 13: f.main = "#C62828"; f.alt = "#6A1B9A"; f.acc = "#FFCDD2"; break; // Elowen (Rosso/Viola)
+                    case 14: f.main = "#2979FF"; f.alt = "#0D47A1"; f.acc = "#82B1FF"; break; // Archmage (Blu Elettrico)
+                    case 15: f.main = "#00B0FF"; f.alt = "#E1F5FE"; f.acc = "#FFFFFF"; break; // Frostwitch (Azzurro/Bianco)
+                    case 16: f.main = "#2E7D32"; f.alt = "#5D4037"; f.acc = "#81C784"; break; // Hawkeye (Verde/Marrone)
+                    case 17: f.main = "#00BFA5"; f.alt = "#1DE9B6"; f.acc = "#B2DFDB"; break; // Windrunner (Verde Acqua)
+                    case 18: f.main = "#455A64"; f.alt = "#1976D2"; f.acc = "#ECEFF1"; break; // Sniper (Grigio/Blu)
+                    case 19: f.main = "#FFD700"; f.alt = "#2E7D32"; f.acc = "#FFF9C4"; break; // Archer Lord (Oro/Verde)
+                    case 20: f.main = "#FFFFFF"; f.alt = "#FFD700"; f.acc = "#FFF9C4"; break; // Seraphiel (Bianco/Oro)
+                    case 21: f.main = "#FFFFFF"; f.alt = "#1976D2"; f.acc = "#E3F2FD"; break; // Cleric (Bianco/Blu)
+                    case 22: f.main = "#9C27B0"; f.alt = "#E91E63"; f.acc = "#F8BBD0"; break; // Bard (Viola/Rosa)
+                    case 23: f.main = "#388E3C"; f.alt = "#5D4037"; f.acc = "#C8E6C9"; break; // Druid (Verde/Marrone)
                 }
                 return f;
             },
@@ -471,148 +468,151 @@
                 const sprite = Array(16).fill(0).map(() => Array(16).fill(0));
                 const f = this.getHeroFeatures(hero);
 
-                // Base Head (Rows 2-6, Cols 6-10)
-                const headStart = 2, headEnd = 6;
-                for(let r=headStart; r<=headEnd; r++) for(let c=6; c<=10; c++) sprite[r][c] = 4; // Skin index
+                // Head positions vary by posture
+                let hY = 3, hX = 8;
+                if (hero.id === 0) { hY = 5; hX = 9; } // Gromthar (hunched)
+                if (hero.id === 11) { hY = 4; hX = 10; } // Nightstalker (curved/predatory)
+                if (hero.id === 22) { hY = 4; hX = 8; } // Bard (relaxed)
 
-                // Eyes
-                sprite[4][7] = 6; sprite[4][9] = 6; // Eye index
-
-                // Role-Based Silhouettes (Body)
-                if (hero.role === "Tank") {
-                    for(let r=7; r<=14; r++) for(let c=4; r<=13?c<=12:c<=11; c++) sprite[r][c] = 1;
-                } else if (hero.role === "Warrior" || hero.role === "Support") {
-                    for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
-                } else if (hero.role === "Assassin" || hero.role === "Ranger" || hero.role === "Mage") {
-                    for(let r=7; r<=14; r++) for(let c=6; r<=11?c<=10:c<=11; c++) sprite[r][c] = 1;
-                }
+                // Draw Head
+                for(let r=hY-1; r<=hY+2; r++) for(let c=hX-2; c<=hX+2; c++) sprite[r][c] = 4;
+                sprite[hY+1][hX-1] = 6; sprite[hY+1][hX+1] = 6; // Eyes
 
                 // UNIQUE EQUIPMENT & FEATURES PER HERO ID
                 switch(hero.id) {
-                    case 0: // Gromthar (Spiked Mace + Spiked Shield)
-                        for(let r=6; r<=13; r++) for(let c=2; c<=6; c++) sprite[r][c] = 3;
-                        sprite[5][3]=3; sprite[5][5]=3; sprite[9][2]=3; sprite[9][6]=3; // Spikes
-                        for(let r=6; r<=9; r++) sprite[r][13] = 2; // Mace handle
-                        for(let r=4; r<=6; r++) for(let c=12; c<=14; c++) sprite[r][c] = 3; // Spiked ball
+                    case 0: // Gromthar (Massive, Huge Shoulders, Hunched, Large Axe)
+                        for(let r=6; r<=14; r++) for(let c=5; c<=13; c++) sprite[r][c] = 1; // Massive Body
+                        for(let r=5; r<=8; r++) { for(let c=5; c<=7; c++) sprite[r][c] = 1; for(let c=11; c<=13; c++) sprite[r][c] = 1; } // Huge Shoulders
+                        for(let r=2; r<=12; r++) sprite[r][3] = 2; // Axe handle
+                        for(let r=1; r<=5; r++) for(let c=1; c<=5; c++) sprite[r][c] = 3; // Huge Axe Head
+                        for(let r=9; r<=13; r++) for(let c=13; c<=15; c++) sprite[r][c] = 3; // Small thick shield
                         break;
-                    case 1: // Ironwall (Tower Shield + Hammer)
-                        for(let r=5; r<=14; r++) for(let c=1; c<=6; c++) sprite[r][c] = 3; // Huge Shield
-                        for(let r=8; r<=11; r++) sprite[r][13] = 2; // Hammer handle
-                        for(let c=12; c<=15; c++) { sprite[7][c]=3; sprite[8][c]=3; } // Hammer head
+                    case 1: // Ironwall (Widest, Wall-like, Giant Shield)
+                        for(let r=6; r<=14; r++) for(let c=3; c<=13; c++) sprite[r][c] = 1; // Widest body
+                        for(let r=3; r<=15; r++) for(let c=1; r<14?c<=8:c<=7; c++) sprite[r][c] = 3; // Gigantic rectangular shield
                         break;
-                    case 2: // Stoneguard (Stone Pillar)
-                        for(let r=4; r<=14; r++) for(let c=2; c<=5; c++) sprite[r][c] = 3; // Pillar
-                        for(let r=4; r<=14; r++) for(let c=11; c<=13; c++) sprite[r][c] = 3; // Pillar 2
+                    case 2: // Stoneguard (Robust, Stone armor, glowing cracks)
+                        for(let r=5; r<=14; r++) for(let c=4; c<=12; c++) sprite[r][c] = 1; // Robust
+                        sprite[7][6]=3; sprite[9][9]=3; sprite[11][5]=3; // Glowing cracks (acc is green)
+                        for(let r=4; r<=6; r++) for(let c=4; c<=12; c++) sprite[r][c] = 2; // Stone armor shoulders
                         break;
-                    case 3: // Drakmor (Demonic Shield + Horns)
-                        for(let r=6; r<=14; r++) for(let c=2; c<=6; c++) sprite[r][c] = 3;
-                        sprite[9][4]=2; // "Eye" on shield
-                        sprite[1][5]=2; sprite[0][4]=2; sprite[1][11]=2; sprite[0][12]=2; // Horns
+                    case 3: // Drakmor (Dark, minaccing, demon horns)
+                        for(let r=6; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
+                        sprite[1][6]=2; sprite[0][5]=2; sprite[1][10]=2; sprite[0][11]=2; // Demon horns
+                        for(let r=6; r<=14; r++) for(let c=3; c<=6; c++) sprite[r][c] = 3; // Minaccing shield
                         break;
-                    case 4: // Artorius (Excalibur + Crown)
-                        for(let r=2; r<=11; r++) sprite[r][3] = 3; // Golden sword
-                        sprite[11][2]=2; sprite[11][4]=2; // Hilt
-                        for(let c=6; c<=10; c++) sprite[2][c] = 3; // Crown
-                        sprite[1][6]=3; sprite[1][8]=3; sprite[1][10]=3;
+                    case 4: // Artorius (Elegant Knight, Errect, Long Broadsword)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=1; r<=11; r++) sprite[r][4] = 3; // Long sword
+                        sprite[11][3]=2; sprite[11][5]=2; // Hilt
                         break;
-                    case 5: // Valeria (Trident)
-                        for(let r=4; r<=15; r++) sprite[r][3] = 2; // Pole
-                        sprite[3][2]=3; sprite[2][3]=3; sprite[3][4]=3; // Trident tips
-                        for(let c=6; c<=10; c++) sprite[2][c] = 7; // Red Hair
-                        sprite[3][11]=7; sprite[4][11]=7;
-                        break;
-                    case 6: // Berserker (Dual Axes + Mohawk)
-                        for(let r=8; r<=12; r++) { sprite[r][3]=2; sprite[r][13]=2; } // Handles
-                        for(let c=2; c<=4; c++) { sprite[7][c]=3; sprite[8][c]=3; } // Axe head L
-                        for(let c=12; c<=14; c++) { sprite[7][c]=3; sprite[8][c]=3; } // Axe head R
-                        for(let r=0; r<=2; r++) sprite[r][8] = 7; // Mohawk
-                        break;
-                    case 7: // Blade Master (Katana)
-                        for(let r=1; r<=12; r++) sprite[r][3] = (r>10?2:3); // Thin blade
-                        for(let r=2; r<=5; r++) sprite[r][12] = 2; // Scabbard
-                        for(let c=6; c<=10; c++) sprite[2][c] = 7; // Black hair
-                        break;
-                    case 8: // Nyxrin (Glow Claws + Hood)
-                        for(let r=2; r<=15; r++) { sprite[r][5] = 2; sprite[r][11] = 2; }
-                        for(let c=5; c<=11; c++) sprite[2][c] = 2; // Hood
-                        sprite[11][4]=3; sprite[10][3]=3; sprite[11][12]=3; sprite[10][13]=3; // Claws
-                        break;
-                    case 9: // Shadowblade (Dual Daggers)
-                        for(let r=11; r<=13; r++) { sprite[r][4]=3; sprite[r][12]=3; }
+                    case 5: // Valeria (Agile, Two short blades)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=10; r<=13; r++) { sprite[r][4]=3; sprite[r][12]=3; } // Two blades
                         sprite[14][4]=2; sprite[14][12]=2; // Handles
-                        for(let r=2; r<=15; r++) { sprite[r][5] = 2; sprite[r][11] = 2; } // Ninja scarf/hood
                         break;
-                    case 10: // Vorthak (Scythe + Mask)
-                        for(let r=3; r<=15; r++) sprite[r][13] = 2; // Handle
-                        for(let c=8; c<=13; c++) sprite[3][c] = 3; // Scythe blade
-                        for(let r=3; r<=6; r++) for(let c=6; c<=10; c++) sprite[r][c] = 3; // Mask
-                        sprite[4][7]=6; sprite[4][9]=6;
+                    case 6: // Berserker (Muscolous, wild hair, two axes)
+                        for(let r=6; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
+                        for(let r=0; r<=3; r++) for(let c=6; c<=10; c++) sprite[r][c] = 7; // Wild Hair
+                        for(let r=9; r<=13; r++) { sprite[r][3]=2; sprite[r][13]=2; } // Handles
+                        for(let c=2; c<=4; c++) { sprite[8][c]=3; sprite[9][c]=3; } // Axe head L
+                        for(let c=12; c<=14; c++) { sprite[8][c]=3; sprite[9][c]=3; } // Axe head R
                         break;
-                    case 11: // Nightstalker (Blowgun)
-                        for(let c=9; c<=14; c++) sprite[9][c] = 2; // Blowgun
-                        for(let r=2; r<=15; r++) { sprite[r][5] = 2; sprite[r][11] = 2; } // Red Hood
+                    case 7: // Blade Master (Snello, Katana)
+                        for(let r=7; r<=14; r++) for(let c=7; c<=9; c++) sprite[r][c] = 1; // Snello
+                        for(let r=2; r<=12; r++) sprite[r][5] = (r>10?2:3); // Katana
                         break;
-                    case 12: // Lunareth (Moon Staff)
-                        for(let r=4; r<=15; r++) sprite[r][13] = 2;
-                        sprite[2][13]=3; sprite[3][12]=3; sprite[3][14]=3; sprite[1][12]=3; // Crescent Moon
+                    case 8: // Nyxrin (Sottile, Etherea, Curved dagger)
+                        for(let r=7; r<=14; r++) for(let c=7; c<=9; c++) sprite[r][c] = 1; // Sottile
+                        sprite[11][5]=3; sprite[10][4]=3; sprite[9][4]=3; // Curved dagger
                         break;
-                    case 13: // Elowen (Fire Staff)
-                        for(let r=4; r<=15; r++) sprite[r][13] = 2;
-                        sprite[3][13]=3; sprite[2][12]=3; sprite[2][14]=3; sprite[1][13]=3; // Fire/Phoenix top
+                    case 9: // Shadowblade (Ninja, Long thin blade)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=2; r<=15; r++) { sprite[r][5] = 2; sprite[r][11] = 2; } // Ninja scarf
+                        for(let r=2; r<=12; r++) sprite[r][13] = 3; // Long thin blade
                         break;
-                    case 14: // Archmage (Orb Staff)
-                        for(let r=5; r<=15; r++) sprite[r][13] = 2;
-                        sprite[2][13]=3; sprite[3][12]=3; sprite[3][14]=3; sprite[4][13]=3; // Floating Orb
+                    case 10: // Vorthak (Robust Assassin, Heavy Blade)
+                        for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1; // Robust
+                        for(let r=4; r<=12; r++) sprite[r][13] = 3; // Heavy blade
+                        sprite[13][13]=2; // Handle
                         break;
-                    case 15: // Frostwitch (Ice Staff)
-                        for(let r=4; r<=15; r++) sprite[r][13] = 2;
-                        sprite[3][13]=3; sprite[2][13]=3; sprite[3][12]=3; sprite[3][14]=3; sprite[4][13]=3; // Snowflake top
+                    case 11: // Nightstalker (Curved/Predatory, Double poisoned dagger)
+                        for(let r=7; r<=11; r++) for(let c=8; c<=12; c++) sprite[r][c] = 1;
+                        for(let r=12; r<=14; r++) for(let c=7; c<=11; c++) sprite[r][c] = 1; // Curved posture
+                        for(let r=9; r<=12; r++) { sprite[r][6]=3; sprite[r][14]=3; } // Daggers
+                        sprite[9][6]=2; sprite[9][14]=2; // Poison tips (acc is green)
                         break;
-                    case 16: // Hawkeye (Longbow)
-                        for(let r=5; r<=13; r++) { sprite[r][13]=2; if(r===9) sprite[r][12]=3; } // Bow
+                    case 12: // Lunareth (Classic Mage, Hood, Fireball)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=2; r<=6; r++) { sprite[r][5]=2; sprite[r][11]=2; } for(let c=5; c<=11; c++) sprite[2][c]=2; // Hood
+                        sprite[10][13]=3; sprite[9][13]=3; sprite[10][14]=3; // Fireball in hand
                         break;
-                    case 17: // Windrunner (Recurve Bow)
-                        for(let r=6; r<=12; r++) { sprite[r][13]=2; }
-                        sprite[5][14]=2; sprite[13][14]=2; // Recurve ends
+                    case 13: // Elowen (Elegant, Staff with crystal)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=4; r<=15; r++) sprite[r][13] = 2; // Staff
+                        sprite[3][13]=3; // Crystal
+                        break;
+                    case 14: // Archmage (Imponente, Staff with runes)
+                        for(let r=6; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1; // Imponente
+                        for(let r=2; r<=15; r++) sprite[r][13] = 2; // Tall Staff
+                        sprite[4][13]=3; sprite[6][13]=3; // Runes
+                        break;
+                    case 15: // Frostwitch (Thin, Mantle, Ice Scepter)
+                        for(let r=7; r<=14; r++) for(let c=7; c<=9; c++) sprite[r][c] = 1; // Thin
+                        for(let r=6; r<=15; r++) { sprite[r][5]=2; sprite[r][11]=2; } // Long mantle
+                        for(let r=4; r<=12; r++) sprite[r][13] = 3; // Ice Scepter
+                        break;
+                    case 16: // Hawkeye (Classic Archer, Longbow)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=4; r<=14; r++) sprite[r][13] = 2; // Longbow
                         sprite[9][12]=3;
                         break;
-                    case 18: // Sniper (SNIPER RIFLE)
-                        for(let c=8; c<=15; c++) sprite[9][c] = 2; // Long Barrel
+                    case 17: // Windrunner (Dynamic, Light Bow)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=6; r<=12; r++) sprite[r][13] = 2; // Light bow
+                        break;
+                    case 18: // Sniper (Postura ferma, Rifle)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let c=8; c<=15; c++) sprite[9][c] = 2; // Rifle barrel
                         sprite[9][10]=3; // Scope
-                        sprite[10][8]=2; // Stock
                         break;
-                    case 19: // Archer Lord (GRAND BOW + Plume)
-                        for(let r=3; r<=15; r++) { sprite[r][14]=3; if(r===9) sprite[r][13]=3; } // Massive Bow
-                        for(let r=0; r<=2; r++) sprite[r][8] = 3; // Plume
+                    case 19: // Archer Lord (Regale, Wide mantle, decorated bow)
+                        for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
+                        for(let r=5; r<=15; r++) { sprite[r][4]=2; sprite[r][12]=2; } // Wide mantle
+                        for(let r=3; r<=15; r++) sprite[r][14] = 3; // Decorated bow
                         break;
-                    case 20: // Seraphiel (Holy Wings)
-                        for(let r=4; r<=12; r++) { sprite[r][3] = 3; sprite[r][2] = 3; sprite[r][13] = 3; sprite[r][14] = 3; }
-                        sprite[3][2] = 3; sprite[3][14] = 3; // Big Wings
+                    case 20: // Seraphiel (Angelic, Wings)
+                        for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=4; r<=11; r++) { sprite[r][3]=3; sprite[r][4]=3; sprite[r][12]=3; sprite[r][13]=3; } // Wings
+                        sprite[1][8]=3; sprite[1][7]=3; sprite[1][9]=3; // Aureola
                         break;
-                    case 21: // Cleric (Cross Staff)
-                        for(let r=4; r<=15; r++) sprite[r][13] = 2;
-                        for(let c=11; c<=15; c++) sprite[6][c] = 3;
-                        sprite[5][13]=3; sprite[7][13]=3; // Cross
+                    case 21: // Cleric (Robust, Holy Mace, Cross)
+                        for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1; // Robust
+                        for(let r=6; r<=11; r++) sprite[r][13] = 2; // Mace handle
+                        for(let r=4; r<=7; r++) for(let c=12; c<=14; c++) sprite[r][c] = 3; // Holy Mace Head
+                        sprite[9][8]=3; sprite[10][8]=3; sprite[9][7]=3; sprite[9][9]=3; // Cross on chest
                         break;
-                    case 22: // Bard (LUTE / INSTRUMENT)
-                        for(let r=9; r<=13; r++) for(let c=11; c<=13; c++) sprite[r][c] = 2; // Lute Body
+                    case 22: // Bard (Relaxed, Lute)
+                        for(let r=8; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
+                        for(let r=9; r<=13; r++) for(let c=11; c<=14; c++) sprite[r][c] = 2; // Lute body
                         for(let r=6; r<=8; r++) sprite[r][12] = 7; // Lute neck
                         break;
-                    case 23: // Druid (Antler Staff)
-                        for(let r=4; r<=15; r++) sprite[r][13] = 2;
-                        sprite[3][12]=2; sprite[2][11]=2; sprite[3][14]=2; sprite[2][15]=2; // Antler top
-                        sprite[1][6]=2; sprite[0][5]=2; sprite[1][10]=2; sprite[0][11]=2; // Antlers on head
+                    case 23: // Druid (Natural, Leaf mantle, Branch staff)
+                        for(let r=7; r<=14; r++) for(let c=6; r<12?c<=10:c<=11; c++) sprite[r][c] = 1;
+                        for(let r=5; r<=14; r++) { sprite[r][5]=2; sprite[r][11]=2; } // Leaf mantle
+                        for(let r=4; r<=15; r++) sprite[r][13] = 2; // Branch staff
+                        sprite[3][12]=2; sprite[3][14]=2; // Branch ends
                         break;
                 }
 
-                // Arm Logic (Hands holding things)
-                if (hero.role !== "Tank") {
+                // Arm Logic (Hands holding things) - General
+                const noArms = [0, 1, 18, 22]; // TANK 0,1 hold huge things or pose differently
+                if (!noArms.includes(hero.id)) {
                     for(let r=8; r<=11; r++) {
-                        if (sprite[r][4] === 0 && (hero.id !== 18 && hero.id !== 22)) sprite[r][4] = 4;
-                        if (sprite[r][12] === 0 && (hero.id !== 18 && hero.id !== 22)) sprite[r][12] = 4;
+                        if (sprite[r][4] === 0) sprite[r][4] = 4;
+                        if (sprite[r][12] === 0) sprite[r][12] = 4;
                     }
                 }
-                // Sniper/Bard special arm pose
                 if (hero.id === 18 || hero.id === 22) {
                     sprite[10][7]=4; sprite[10][11]=4; // Holding instrument/rifle
                 }
@@ -633,7 +633,7 @@
                 return outlined;
             },
 
-            draw(ctx, hero, x, y, size, frame, action, flip = false) {
+            draw(ctx, hero, x, y, size, frame, action, flip = false, ent = null) {
                 const f = this.getHeroFeatures(hero);
                 const colors = {
                     1: f.main,
@@ -677,6 +677,9 @@
                     ctx.shadowColor = f.glow;
                 }
 
+                // Skill Cues (Visual Effects)
+                this.drawSkillCues(ctx, hero, x, y, size, frame, ent, flip);
+
                 // Name and Role text (Centered) - Only if large enough
                 if (size > 100) {
                     ctx.globalAlpha = 0.8;
@@ -688,6 +691,71 @@
                     ctx.fillText(hero.role, x + size/2, y + size/2 + size/6);
                 }
 
+                ctx.restore();
+            },
+
+            drawSkillCues(ctx, hero, x, y, size, frame, ent, flip) {
+                const center = { x: x + size/2, y: y + size/2 };
+                ctx.save();
+
+                // Cues that appear even without 'ent' (Idle/Preview)
+                if (hero.id === 12) { // Lunareth Fireball
+                    const ang = frame * 0.1;
+                    drawPoint(center.x + Math.cos(ang) * size/3, center.y + Math.sin(ang) * size/3, 4, "#FF5722");
+                }
+                if (hero.id === 13) { // Elowen Meteorites
+                    for(let i=0; i<3; i++) {
+                        const ang = frame * 0.08 + (i * Math.PI * 2 / 3);
+                        drawPoint(center.x + Math.cos(ang) * size/2.5, center.y + Math.sin(ang) * size/2.5, 3, "#9C27B0");
+                    }
+                }
+                if (hero.id === 22) { // Bard Music Notes
+                    const offY = Math.sin(frame * 0.2) * 5;
+                    ctx.fillStyle = "#E91E63";
+                    ctx.font = `${Math.floor(size/5)}px Arial`;
+                    ctx.fillText("♪", center.x + size/3, center.y - size/3 + offY);
+                    ctx.fillText("♫", center.x - size/3, center.y - size/2 + offY);
+                }
+                if (hero.id === 15) { // Frostwitch Snowflakes
+                    ctx.globalAlpha = 0.5;
+                    for(let i=0; i<4; i++) {
+                        const r = (frame*2 + i*20) % (size/2);
+                        const ang = i * Math.PI/2;
+                        drawPoint(center.x + Math.cos(ang)*r, center.y + Math.sin(ang)*r, 2, "white");
+                    }
+                    ctx.globalAlpha = 1.0;
+                }
+
+                // Battle-specific Cues
+                if (ent) {
+                    if (hero.id === 0 && ent.target) { // Gromthar Taunt !
+                        ctx.fillStyle = "red";
+                        ctx.font = `bold ${Math.floor(size/3)}px Arial`;
+                        ctx.fillText("!", center.x, y - 20);
+                    }
+                    if (hero.id === 6 && ent.curHp < ent.maxHp * 0.5) { // Berserker Rage Eyes
+                        drawPoint(x + size*0.55, y + size*0.35, 3, "red");
+                        drawPoint(x + size*0.65, y + size*0.35, 3, "red");
+                    }
+                    if (hero.id === 18) { // Sniper Sight
+                        ctx.strokeStyle = "rgba(255,0,0,0.3)";
+                        ctx.beginPath();
+                        ctx.moveTo(center.x, center.y);
+                        ctx.lineTo(flip ? 0 : ctx.canvas.width, center.y);
+                        ctx.stroke();
+                    }
+                    if (hero.id === 1) { // Ironwall Shield Glow
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = "#00B0FF";
+                        ctx.fillStyle = "rgba(0,176,255,0.2)";
+                        ctx.fillRect(x + size*0.1, y + size*0.2, size*0.4, size*0.8);
+                    }
+                }
+
+                function drawPoint(px, py, r, color) {
+                    ctx.fillStyle = color;
+                    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+                }
                 ctx.restore();
             }
         };
@@ -748,7 +816,8 @@
                             <span>⚔️ ${h.atk}</span>
                         </div>
                         <div class="hero-skill-info">
-                            <div style="color:var(--accent-gold); font-weight:bold; font-size:0.6rem;">✨ ${h.skill}</div>
+                            <div style="color:var(--accent-gold); font-weight:bold; font-size:0.65rem;">✨ ${h.skill}</div>
+                            <div style="color:#eee; font-size:0.6rem; margin-top:2px;">🛡️ ${h.passive}</div>
                         </div>
                     `;
                     card.appendChild(info);
@@ -993,19 +1062,34 @@
                 this.cellWidth = canvas.width / this.gridSize.cols;
                 this.cellHeight = canvas.height / this.gridSize.rows;
 
-                // Initialize player positions (initially outside or in a tray)
+                // Define 5 specific slots for player (Left side)
+                this.playerSlots = [
+                    { x: 2, y: 2 }, { x: 2, y: 4 }, { x: 2, y: 6 },
+                    { x: 5, y: 3 }, { x: 5, y: 5 }
+                ];
+
+                // Define 5 specific slots for AI (Right side)
+                this.aiSlots = [
+                    { x: 15, y: 2 }, { x: 15, y: 4 }, { x: 15, y: 6 },
+                    { x: 12, y: 3 }, { x: 12, y: 5 }
+                ];
+
+                // Initialize player positions (in bottom tray)
+                const trayY = canvas.height * 0.85;
+                const traySpacing = canvas.width / 6;
                 this.playerTeam.forEach((h, i) => {
                     h.gridX = -1;
                     h.gridY = -1;
                     h.placed = false;
-                    h.screenX = 50;
-                    h.screenY = 50 + i * 60;
+                    h.screenX = traySpacing * (i + 0.5);
+                    h.screenY = trayY;
                 });
 
-                // AI positions heroes automatically
+                // AI positions heroes automatically in their slots
                 this.aiTeam.forEach((h, i) => {
-                    h.gridX = 17 - Math.floor(i / 3); // Back columns
-                    h.gridY = 2 + (i % 5);
+                    const slot = this.aiSlots[i];
+                    h.gridX = slot.x;
+                    h.gridY = slot.y;
                     h.placed = true;
                 });
 
@@ -1017,7 +1101,7 @@
             resizeCanvas(canvas) {
                 const container = canvas.parentElement;
                 canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight * 0.8;
+                canvas.height = container.clientHeight * 0.9;
                 this.cellWidth = canvas.width / 18;
                 this.cellHeight = canvas.height / 9;
             },
@@ -1032,10 +1116,11 @@
 
                 const onStart = (e) => {
                     const pos = getPos(e);
+                    const size = Math.min(this.cellWidth, this.cellHeight);
                     this.playerTeam.forEach(h => {
                         const hX = h.placed ? h.gridX * this.cellWidth : h.screenX;
                         const hY = h.placed ? h.gridY * this.cellHeight : h.screenY;
-                        if (pos.x >= hX && pos.x <= hX + this.cellWidth && pos.y >= hY && pos.y <= hY + this.cellHeight) {
+                        if (pos.x >= hX && pos.x <= hX + size && pos.y >= hY && pos.y <= hY + size) {
                             this.dragHero = h;
                             h.placed = false;
                         }
@@ -1052,19 +1137,37 @@
 
                 const onEnd = (e) => {
                     if (this.dragHero) {
-                        const gridX = Math.floor((this.dragHero.screenX + this.cellWidth / 2) / this.cellWidth);
-                        const gridY = Math.floor((this.dragHero.screenY + this.cellHeight / 2) / this.cellHeight);
+                        const pos = getPos(e);
+                        const midX = this.dragHero.screenX + this.cellWidth / 2;
+                        const midY = this.dragHero.screenY + this.cellHeight / 2;
 
-                        // Check if valid player side (0-8)
-                        if (gridX >= 0 && gridX <= 8 && gridY >= 0 && gridY <= 8) {
-                            // Check if cell occupied
-                            const occupied = this.playerTeam.find(h => h.placed && h.gridX === gridX && h.gridY === gridY);
-                            if (!occupied) {
-                                this.dragHero.gridX = gridX;
-                                this.dragHero.gridY = gridY;
-                                this.dragHero.placed = true;
+                        // Check if dropped near any slot
+                        let foundSlot = false;
+                        this.playerSlots.forEach(slot => {
+                            const sx = slot.x * this.cellWidth + this.cellWidth/2;
+                            const sy = slot.y * this.cellHeight + this.cellHeight/2;
+                            const dist = Math.sqrt((midX - sx)**2 + (midY - sy)**2);
+
+                            if (dist < this.cellWidth * 1.5) {
+                                // Check if slot occupied
+                                const occupied = this.playerTeam.find(h => h.placed && h.gridX === slot.x && h.gridY === slot.y);
+                                if (!occupied) {
+                                    this.dragHero.gridX = slot.x;
+                                    this.dragHero.gridY = slot.y;
+                                    this.dragHero.placed = true;
+                                    foundSlot = true;
+                                }
                             }
+                        });
+
+                        if (!foundSlot) {
+                            // Snap back to tray
+                            const idx = this.playerTeam.indexOf(this.dragHero);
+                            const traySpacing = canvas.width / 6;
+                            this.dragHero.screenX = traySpacing * (idx + 0.5);
+                            this.dragHero.screenY = canvas.height * 0.85;
                         }
+
                         this.dragHero = null;
                         this.checkAllPlaced();
                     }
@@ -1089,42 +1192,48 @@
                 const ctx = this.pCtx;
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-                // Draw Grid
-                ctx.strokeStyle = "#333";
+                // Draw Background/Grid
+                ctx.strokeStyle = "rgba(138, 43, 226, 0.2)";
                 for (let i = 0; i <= 18; i++) {
                     ctx.beginPath();
                     ctx.lineWidth = (i === 9) ? 4 : 1;
-                    ctx.strokeStyle = (i === 9) ? varStyle('--accent-purple') : "#333";
                     ctx.moveTo(i * this.cellWidth, 0);
-                    ctx.lineTo(i * this.cellWidth, ctx.canvas.height);
-                    ctx.stroke();
-                }
-                for (let i = 0; i <= 9; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, i * this.cellHeight);
-                    ctx.lineTo(ctx.canvas.width, i * this.cellHeight);
+                    ctx.lineTo(i * this.cellWidth, ctx.canvas.height * 0.8);
                     ctx.stroke();
                 }
 
-                // Draw Tray for unplaced heroes
-                ctx.fillStyle = "rgba(255,255,255,0.05)";
-                ctx.fillRect(0, 0, 150, ctx.canvas.height);
+                // Draw Slots
+                ctx.lineWidth = 2;
+                this.playerSlots.forEach(slot => {
+                    const occupied = this.playerTeam.find(h => h.placed && h.gridX === slot.x && h.gridY === slot.y);
+                    ctx.strokeStyle = occupied ? "var(--accent-gold)" : "rgba(255, 215, 0, 0.3)";
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(slot.x * this.cellWidth + 5, slot.y * this.cellHeight + 5, this.cellWidth - 10, this.cellHeight - 10);
+                });
+                ctx.setLineDash([]);
+
+                // Draw Tray Area
+                ctx.fillStyle = "rgba(0,0,0,0.5)";
+                ctx.fillRect(0, ctx.canvas.height * 0.8, ctx.canvas.width, ctx.canvas.height * 0.2);
                 ctx.fillStyle = "#aaa";
-                ctx.font = "12px Arial";
-                ctx.fillText("Area Eroi", 10, 20);
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("TRASCINA GLI EROI NEI 5 SLOT DORATI", ctx.canvas.width/2, ctx.canvas.height * 0.83);
+
+                const size = Math.min(this.cellWidth, this.cellHeight);
+
+                // Draw AI Heroes (as silhouettes)
+                this.aiTeam.forEach(h => {
+                    ctx.globalAlpha = 0.4;
+                    heroDrawer.draw(ctx, h, h.gridX * this.cellWidth, h.gridY * this.cellHeight, size, Date.now() / 16, 'idle', true);
+                    ctx.globalAlpha = 1.0;
+                });
 
                 // Draw Player Heroes
                 this.playerTeam.forEach(h => {
                     const x = h.placed ? h.gridX * this.cellWidth : h.screenX;
                     const y = h.placed ? h.gridY * this.cellHeight : h.screenY;
-                    heroDrawer.draw(ctx, h, x, y, Math.min(this.cellWidth, this.cellHeight), Date.now() / 16, 'idle');
-                });
-
-                // Draw AI Heroes (as silhouettes or faint)
-                this.aiTeam.forEach(h => {
-                    ctx.globalAlpha = 0.5;
-                    heroDrawer.draw(ctx, h, h.gridX * this.cellWidth, h.gridY * this.cellHeight, Math.min(this.cellWidth, this.cellHeight), Date.now() / 16, 'idle', true);
-                    ctx.globalAlpha = 1.0;
+                    heroDrawer.draw(ctx, h, x, y, size, Date.now() / 16, 'idle');
                 });
 
                 function varStyle(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
@@ -1519,7 +1628,7 @@
                     const screenY = ent.y * this.cellHeight;
                     const size = Math.min(this.cellWidth, this.cellHeight);
 
-                    heroDrawer.draw(ctx, ent, screenX, screenY, size, now / 16, 'idle', !ent.isPlayer);
+                    heroDrawer.draw(ctx, ent, screenX, screenY, size, now / 16, 'idle', !ent.isPlayer, ent);
 
                     // HP Bar
                     const hpW = size * 0.8;
