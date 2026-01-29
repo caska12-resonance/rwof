@@ -124,15 +124,24 @@
             background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
             border: 2px solid #444;
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
             cursor: pointer;
             transition: all 0.2s ease-out;
             position: relative;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-card canvas {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            margin-bottom: 5px;
+            image-rendering: pixelated;
         }
 
         .hero-card:hover:not(.banned):not(.picked) {
@@ -417,78 +426,130 @@
         };
 
         const heroDrawer = {
+            getHeroFeatures(hero) {
+                const f = {
+                    skin: "#ffdbac",
+                    hair: "#4b2c20",
+                    main: ROLE_COLORS[hero.role].primary,
+                    alt: ROLE_COLORS[hero.role].secondary,
+                    acc: ROLE_COLORS[hero.role].accent,
+                    eye: "#000",
+                    glow: null
+                };
+
+                // Unique Hero Customization
+                switch(hero.id) {
+                    case 0: f.skin = "#7a9a7a"; f.hair = "#333"; f.acc = "#888"; break; // Gromthar (Greenish/Spikes)
+                    case 1: f.main = "#2b5d8a"; f.alt = "#c0c0c0"; f.acc = "#ffd700"; break; // Ironwall (Silver/Blue/Gold)
+                    case 2: f.skin = "#888"; f.main = "#555"; f.alt = "#333"; f.acc = "#999"; break; // Stoneguard (Grey)
+                    case 3: f.skin = "#d2b48c"; f.main = "#800"; f.alt = "#200"; f.acc = "#ff4444"; break; // Drakmor (Red/Dark)
+                    case 4: f.acc = "#ffd700"; f.alt = "#2b5d8a"; f.hair = "#ffd700"; break; // Artorius (Gold Crown)
+                    case 5: f.main = "#a00"; f.hair = "#f44"; f.alt = "#888"; break; // Valeria (Red Ponytail)
+                    case 6: f.skin = "#d2b48c"; f.hair = "#844"; f.main = "#8b4513"; break; // Berserker (Mohawk)
+                    case 7: f.main = "#483d8b"; f.hair = "#111"; f.acc = "#c0c0c0"; break; // Blade Master (Samurai)
+                    case 8: f.skin = "#e0d0f0"; f.main = "#4b0082"; f.eye = "#f0f"; f.glow = "#f0f"; break; // Nyxrin (Glow Eyes)
+                    case 9: f.main = "#111"; f.alt = "#000"; f.acc = "#444"; break; // Shadowblade (Ninja)
+                    case 10: f.skin = "#f5f5dc"; f.main = "#2f4f4f"; f.acc = "#fff"; break; // Vorthak (Bone Mask)
+                    case 11: f.main = "#600"; f.alt = "#000"; f.acc = "#f00"; break; // Nightstalker (Red Hood)
+                    case 12: f.main = "#4169e1"; f.hair = "#fff"; f.acc = "#f0f8ff"; f.glow = "#fff"; break; // Lunareth (Moon)
+                    case 13: f.main = "#ff4500"; f.hair = "#ff0"; f.acc = "#ffff00"; f.glow = "#f00"; break; // Elowen (Fire)
+                    case 14: f.main = "#9932cc"; f.hair = "#888"; f.acc = "#00ffff"; f.glow = "#0ff"; break; // Archmage (Astral)
+                    case 15: f.main = "#00ced1"; f.hair = "#afeeee"; f.acc = "#fff"; f.glow = "#fff"; break; // Frostwitch (Ice)
+                    case 16: f.main = "#228b22"; f.hair = "#8b4513"; f.acc = "#adff2f"; break; // Hawkeye (Forest)
+                    case 17: f.main = "#87ceeb"; f.hair = "#fff"; f.acc = "#ffffff"; break; // Windrunner (Sky)
+                    case 18: f.main = "#556b2f"; f.hair = "#d2b48c"; f.acc = "#8b4513"; break; // Sniper (Camo)
+                    case 19: f.main = "#ffd700"; f.alt = "#ffffff"; f.acc = "#ffffff"; break; // Archer Lord (Royal)
+                    case 20: f.skin = "#fffaf0"; f.hair = "#ffd700"; f.main = "#fff"; f.acc = "#ffd700"; f.glow = "#ffd700"; break; // Seraphiel (Holy)
+                    case 21: f.main = "#f8f8ff"; f.alt = "#b22222"; f.acc = "#ffd700"; break; // Cleric (Red/White)
+                    case 22: f.main = "#20b2aa"; f.hair = "#8b4513"; f.acc = "#ff00ff"; break; // Bard (Teal/Pink)
+                    case 23: f.main = "#556b2f"; f.hair = "#228b22"; f.acc = "#deb887"; break; // Druid (Moss)
+                }
+                return f;
+            },
+
             getHeroSprite(hero, frame, action) {
                 const sprite = Array(16).fill(0).map(() => Array(16).fill(0));
+                const f = this.getHeroFeatures(hero);
 
                 // Base Head (Rows 2-6, Cols 6-10)
                 const headStart = 2, headEnd = 6;
-                for(let r=headStart; r<=headEnd; r++) for(let c=6; c<=10; c++) sprite[r][c] = 4;
+                for(let r=headStart; r<=headEnd; r++) for(let c=6; c<=10; c++) sprite[r][c] = 4; // Skin index
+
                 // Eyes
-                sprite[4][7] = 5; sprite[4][9] = 5;
+                sprite[4][7] = 6; sprite[4][9] = 6; // Eye index
 
                 if (hero.role === "Tank") {
-                    // Bulky Body
-                    for(let r=7; r<=14; r++) for(let c=4; c<=12; c++) sprite[r][c] = 1;
-                    // Massive Shield
-                    for(let r=6; r<=13; r++) for(let c=2; c<=6; c++) sprite[r][c] = 3;
-                    // Horned Helmet
-                    for(let r=1; r<=3; r++) for(let c=5; c<=11; c++) sprite[r][c] = 2;
-                    sprite[0][5] = 3; sprite[0][11] = 3;
-                    // Arms
+                    for(let r=7; r<=14; r++) for(let c=4; r<=13?c<=12:c<=11; c++) sprite[r][c] = 1; // Main
+                    for(let r=6; r<=13; r++) for(let c=2; c<=6; c++) sprite[r][c] = 3; // Shield/Acc
+
+                    if(hero.id === 0) { // Gromthar spikes
+                        sprite[6][4]=3; sprite[6][12]=3; sprite[5][4]=3; sprite[5][12]=3;
+                    } else if (hero.id === 3) { // Drakmor horns
+                        sprite[1][5]=2; sprite[0][4]=2; sprite[1][11]=2; sprite[0][12]=2;
+                    } else {
+                        for(let r=1; r<=3; r++) for(let c=5; c<=11; c++) sprite[r][c] = 2; // Helmet
+                    }
                     for(let r=8; r<=11; r++) sprite[r][13] = 4;
                 } else if (hero.role === "Warrior") {
-                    // Standard Body
                     for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
-                    // Big Sword
-                    for(let r=3; r<=10; r++) sprite[r][3] = 3;
-                    sprite[11][3] = 2; // Hilt
-                    // Shoulder pads
+                    for(let r=3; r<=10; r++) sprite[r][3] = 3; // Sword
+                    sprite[11][3] = 2;
                     sprite[7][4] = 3; sprite[7][12] = 3;
-                    // Hair
-                    for(let c=6; c<=10; c++) sprite[2][c] = 2;
+
+                    if(hero.id === 4) { // Artorius Crown
+                         for(let c=6; c<=10; c++) sprite[2][c] = 3;
+                         sprite[1][6]=3; sprite[1][8]=3; sprite[1][10]=3;
+                    } else if(hero.id === 6) { // Berserker Mohawk
+                         for(let r=0; r<=2; r++) sprite[r][8] = 2;
+                    } else {
+                         for(let c=6; c<=10; c++) sprite[2][c] = 2; // Hair
+                    }
                 } else if (hero.role === "Assassin") {
-                    // Lean Body
                     for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
-                    // Hood & Cape
-                    for(let r=2; r<=15; r++) { sprite[r][5] = 2; sprite[r][11] = 2; }
+                    for(let r=2; r<=15; r++) { sprite[r][5] = 2; sprite[r][11] = 2; } // Hood
                     for(let c=5; c<=11; c++) sprite[2][c] = 2;
-                    // Dual Daggers
+
+                    if(hero.id === 10) { // Vorthak Mask
+                        for(let r=3; r<=6; r++) for(let c=6; c<=10; c++) sprite[r][c] = 3;
+                        sprite[4][7]=6; sprite[4][9]=6;
+                    }
                     sprite[11][4] = 3; sprite[11][12] = 3;
                     sprite[12][4] = 2; sprite[12][12] = 2;
                 } else if (hero.role === "Mage") {
-                    // Robes (Flare at bottom)
                     for(let r=7; r<=11; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
                     for(let r=12; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
-                    // Wizard Hat
-                    for(let r=0; r<=2; r++) for(let c=8-r; c<=8+r; c++) sprite[r][c] = 2;
-                    // Ornate Staff
-                    for(let r=4; r<=15; r++) sprite[r][13] = 2;
-                    sprite[3][13] = 3; // Orb
+
+                    if(hero.id === 13) { // Elowen Crown
+                        for(let c=6; c<=10; c++) sprite[2][c] = 2;
+                        sprite[1][7]=3; sprite[1][9]=3;
+                    } else {
+                        for(let r=0; r<=2; r++) for(let c=8-r; c<=8+r; c++) sprite[r][c] = 2; // Hat
+                    }
+                    for(let r=4; r<=15; r++) sprite[r][13] = 2; // Staff
+                    sprite[3][13] = 3;
                 } else if (hero.role === "Ranger") {
-                    // Standard Body
                     for(let r=7; r<=14; r++) for(let c=6; c<=10; c++) sprite[r][c] = 1;
-                    // Bow
-                    for(let r=5; r<=13; r++) sprite[r][13] = 2;
-                    sprite[9][12] = 3; // Arrow/String point
-                    // Hood
+                    for(let r=5; r<=13; r++) sprite[r][13] = 2; // Bow
+                    sprite[9][12] = 3;
+
+                    if(hero.id === 19) { // Archer Lord Plume
+                        for(let r=0; r<=2; r++) sprite[r][8] = 3;
+                    }
                     for(let c=6; c<=10; c++) sprite[2][c] = 2;
                     sprite[3][5] = 2; sprite[3][11] = 2;
                 } else if (hero.role === "Support") {
-                    // Ornate Robes
                     for(let r=7; r<=14; r++) for(let c=5; c<=11; c++) sprite[r][c] = 1;
-                    // Wings for Seraphiel
-                    if (hero.name === "Seraphiel") {
-                        for(let r=5; r<=11; r++) { sprite[r][3] = 3; sprite[r][13] = 3; }
-                        sprite[6][2] = 3; sprite[6][14] = 3;
+                    if (hero.id === 20) { // Seraphiel Wings
+                        for(let r=4; r<=12; r++) { sprite[r][3] = 3; sprite[r][2] = 3; sprite[r][13] = 3; sprite[r][14] = 3; }
+                        sprite[3][2] = 3; sprite[3][14] = 3;
+                    } else if(hero.id === 23) { // Druid Antlers
+                        sprite[1][6]=2; sprite[0][5]=2; sprite[1][10]=2; sprite[0][11]=2;
                     } else {
-                        // Halo/Aura for others
-                        sprite[1][8] = 3; sprite[0][7] = 3; sprite[0][9] = 3;
+                        sprite[1][8] = 3; sprite[0][7] = 3; sprite[0][9] = 3; // Halo
                     }
-                    // Hair/Headdress
                     for(let c=6; c<=10; c++) sprite[2][c] = 3;
                 }
 
-                // Generic Arms (if not role-specific)
                 if (hero.role !== "Tank" && hero.role !== "Assassin") {
                     for(let r=8; r<=11; r++) {
                         if (sprite[r][4] === 0) sprite[r][4] = 4;
@@ -513,12 +574,15 @@
             },
 
             draw(ctx, hero, x, y, size, frame, action, flip = false) {
+                const f = this.getHeroFeatures(hero);
                 const colors = {
-                    1: ROLE_COLORS[hero.role].primary,
-                    2: ROLE_COLORS[hero.role].secondary,
-                    3: ROLE_COLORS[hero.role].accent,
-                    4: "#ffdbac", // Skin
-                    5: "#000000"  // Outline
+                    1: f.main,
+                    2: f.alt,
+                    3: f.acc,
+                    4: f.skin,
+                    5: "#000000", // Outline
+                    6: f.eye,
+                    7: f.hair
                 };
 
                 ctx.save();
@@ -547,20 +611,22 @@
 
                 canvasUtils.drawPixelSprite(ctx, x, y + bob, size, sprite, colors);
 
-                // Glow effect for some roles
-                if (hero.role === "Mage" || hero.role === "Support") {
+                // Glow effect for some roles or specific heroes
+                if (f.glow) {
                     ctx.shadowBlur = 10;
-                    ctx.shadowColor = colors[3];
+                    ctx.shadowColor = f.glow;
                 }
 
-                // Name and Role text (Centered)
-                ctx.globalAlpha = 0.8;
-                ctx.fillStyle = "white";
-                ctx.font = `bold ${Math.floor(size/6)}px Arial`;
-                ctx.textAlign = "center";
-                ctx.fillText(hero.name, x + size/2, y + size/2);
-                ctx.font = `${Math.floor(size/8)}px Arial`;
-                ctx.fillText(hero.role, x + size/2, y + size/2 + size/6);
+                // Name and Role text (Centered) - Only if large enough
+                if (size > 100) {
+                    ctx.globalAlpha = 0.8;
+                    ctx.fillStyle = "white";
+                    ctx.font = `bold ${Math.floor(size/6)}px Arial`;
+                    ctx.textAlign = "center";
+                    ctx.fillText(hero.name, x + size/2, y + size/2);
+                    ctx.font = `${Math.floor(size/8)}px Arial`;
+                    ctx.fillText(hero.role, x + size/2, y + size/2 + size/6);
+                }
 
                 ctx.restore();
             }
@@ -603,19 +669,29 @@
                     const card = document.createElement('div');
                     card.className = 'hero-card';
                     card.id = `hero-${h.id}`;
-                    card.innerHTML = `
-                        <div class="role-tag" style="background:${ROLE_COLORS[h.role].primary}">${h.role}</div>
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 80;
+                    canvas.height = 80;
+                    const ctx = canvas.getContext('2d');
+                    heroDrawer.draw(ctx, h, 0, 0, 80, 0, 'idle');
+
+                    card.appendChild(canvas);
+
+                    const info = document.createElement('div');
+                    info.style.width = '100%';
+                    info.innerHTML = `
+                        <div class="role-tag" style="background:${ROLE_COLORS[h.role].primary}; margin: 0 auto 5px auto;">${h.role}</div>
                         <div class="hero-name">${h.name}</div>
                         <div class="hero-stats">
                             <span>❤️ ${h.hp}</span>
                             <span>⚔️ ${h.atk}</span>
-                            <span>🛡️ ${h.armor}</span>
                         </div>
                         <div class="hero-skill-info">
-                            <div style="color:var(--accent-gold); font-weight:bold; margin-bottom:2px;">✨ ${h.skill}</div>
-                            <div style="color:#888;">📜 ${h.passive}</div>
+                            <div style="color:var(--accent-gold); font-weight:bold; font-size:0.6rem;">✨ ${h.skill}</div>
                         </div>
                     `;
+                    card.appendChild(info);
                     card.onclick = () => this.handleHeroClick(h.id);
                     grid.appendChild(card);
                 });
